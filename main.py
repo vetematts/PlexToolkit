@@ -42,8 +42,12 @@ MOCK_MODE = False  # Set to True to simulate Plex actions without making changes
 
 
 def welcome():
-    # Display welcome message and Plex logo.
-    os.system("clear")  # Optional: clears terminal screen for cleanliness
+    """Display welcome message and Plex logo, clearing the screen first."""
+    # Clear terminal screen for cleanliness in a cross-platform way.
+    if os.name == "nt":  # For Windows
+        os.system("cls")
+    else:  # For macOS and Linux
+        os.system("clear")
     print_plex_logo_ascii()
     print(Fore.CYAN + f"\n{emojis.MOVIE} Welcome to the Plex Collection Creator!")
     print(Fore.YELLOW + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
@@ -119,7 +123,11 @@ def run_collection_builder():
             def configure_credentials():
                 # Submenu for credentials
                 while True:
-                    os.system("clear")
+                    # Clear terminal screen for cleanliness in a cross-platform way.
+                    if os.name == "nt":  # For Windows
+                        os.system("cls")
+                    else:  # For macOS and Linux
+                        os.system("clear")
                     print(Fore.CYAN + f"{emojis.CONFIGURE} CONFIGURE CREDENTIALS")
                     print(Fore.GREEN + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
                     print(
@@ -180,7 +188,11 @@ def run_collection_builder():
                         )
                         pause()
                     elif choice == "4":
-                        os.system("clear")
+                        # Clear terminal screen for cleanliness in a cross-platform way.
+                        if os.name == "nt":  # For Windows
+                            os.system("cls")
+                        else:  # For macOS and Linux
+                            os.system("clear")
                         print(Fore.CYAN + f"{emojis.BOOK} Current Configuration:\n")
                         print(json.dumps(config, indent=4))
                         pause("\nPress Enter to return to the credentials menu...")
