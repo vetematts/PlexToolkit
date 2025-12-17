@@ -2,7 +2,7 @@
 
 This is a custom Python application that helps users manage and organize their Plex movie libraries by building themed collections. Whether you're a fan of franchises like _Harry Potter_ or studios like _A24_, this tool streamlines the process of grouping titles into collections.
 
-<img width="1244" height="1492" alt="PlexCollectionCreatorTerminal" src="https://github.com/user-attachments/assets/3e8ae6cc-bda0-4c24-98df-8605cb5ee146" />
+<img width="1244" height="1492" alt="PlexCollectionCreatorTerminal" src="https://github.com/user-attachments/assets/e9e16e29-ed06-4cec-a265-25cf4d6e5f14" />
 
 ## 🛠️ Setup
 
