@@ -7,6 +7,9 @@ This script uses:
 import os
 import json
 import re
+import sys
+import contextlib
+from typing import Optional
 
 from colorama import init, Fore
 import emojis
@@ -21,6 +24,150 @@ def is_escape(value: str) -> bool:
         return False
     value = value.strip()
     return value == "\x1b" or value.lower() in ("esc", "escape")
+
+@contextlib.contextmanager
+def _raw_input_mode():
+    """
+    Temporarily switch stdin into a mode where we can read single keypresses.
+    Falls back to normal behavior when stdin isn't a TTY.
+    """
+    if not sys.stdin.isatty():
+        yield
+        return
+    if os.name == "nt":
+        yield
+        return
+    import termios
+    import tty
+
+    fd = sys.stdin.fileno()
+    old = termios.tcgetattr(fd)
+    try:
+        tty.setraw(fd)
+        yield
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old)
+
+
+def read_keypress() -> Optional[str]:
+    """
+    Reads a single keypress and returns:
+    - "ESC" for Escape
+    - "ENTER" for Enter/Return
+    - "BACKSPACE" for Backspace/Delete
+    - otherwise the literal character (e.g., "1", "y", "a")
+    Returns None if stdin isn't a TTY (caller should fall back to input()).
+    """
+    if not sys.stdin.isatty():
+        return None
+
+    if os.name == "nt":
+        import msvcrt
+
+        ch = msvcrt.getwch()
+        if ch == "\x1b":
+            return "ESC"
+        if ch in ("\r", "\n"):
+            return "ENTER"
+        if ch in ("\b", "\x7f"):
+            return "BACKSPACE"
+        return ch
+
+    with _raw_input_mode():
+        ch = sys.stdin.read(1)
+    if ch == "\x1b":
+        return "ESC"
+    if ch in ("\r", "\n"):
+        return "ENTER"
+    if ch in ("\b", "\x7f"):
+        return "BACKSPACE"
+    return ch
+
+
+def read_menu_choice(prompt: str, valid: set[str]) -> str:
+    """
+    Reads a single-key choice (no Enter) when possible; falls back to input().
+    """
+    if not sys.stdin.isatty():
+        return input(prompt).strip()
+
+    print(prompt, end="", flush=True)
+    while True:
+        key = read_keypress()
+        if key is None:
+            return input().strip()
+        if key == "ESC":
+            print("Esc")
+            return "ESC"
+        if key == "ENTER":
+            continue
+        if len(key) == 1:
+            candidate = key.strip()
+            if candidate in valid:
+                print(candidate)
+                return candidate
+
+def read_number(max_value: int, prompt: str) -> Optional[int]:
+    """
+    Reads a number up to max_value, with real Escape support (no Enter required for Esc).
+    Returns None if user presses Esc.
+    Uses raw key input when possible; otherwise falls back to input().
+    """
+    if not sys.stdin.isatty():
+        while True:
+            raw = input(prompt).strip()
+            if is_escape(raw):
+                return None
+            if raw.isdigit():
+                value = int(raw)
+                if 1 <= value <= max_value:
+                    return value
+            print("Invalid selection.")
+
+    print(prompt, end="", flush=True)
+    buf = []
+    while True:
+        key = read_keypress()
+        if key is None:
+            raw = input().strip()
+            if is_escape(raw):
+                return None
+            if raw.isdigit():
+                value = int(raw)
+                if 1 <= value <= max_value:
+                    return value
+            print("Invalid selection.")
+            print(prompt, end="", flush=True)
+            buf = []
+            continue
+
+        if key == "ESC":
+            print()
+            return None
+        if key == "ENTER":
+            if not buf:
+                continue
+            raw = "".join(buf)
+            if raw.isdigit():
+                value = int(raw)
+                if 1 <= value <= max_value:
+                    print()
+                    return value
+            print("\nInvalid selection.")
+            print(prompt, end="", flush=True)
+            buf = []
+            continue
+        if key == "BACKSPACE":
+            if buf:
+                buf.pop()
+                sys.stdout.write("\b \b")
+                sys.stdout.flush()
+            continue
+
+        if len(key) == 1 and key.isdigit():
+            buf.append(key)
+            sys.stdout.write(key)
+            sys.stdout.flush()
 
 
 def load_config():
@@ -85,6 +232,75 @@ def run_collection_builder():
     class UserAbort(Exception):
         pass
 
+    def read_index_or_skip(max_value: int, prompt: str) -> Optional[int]:
+        """
+        Reads either:
+        - a numeric selection (1..max_value) + Enter
+        - 's' to skip (returns None)
+        - Esc to cancel (raises UserAbort)
+        """
+        if not sys.stdin.isatty():
+            while True:
+                raw = input(prompt).strip()
+                if is_escape(raw) or raw.lower() in ("q", "quit"):
+                    raise UserAbort()
+                if raw.lower() in ("s", "skip"):
+                    return None
+                if raw.isdigit():
+                    idx = int(raw)
+                    if 1 <= idx <= max_value:
+                        return idx
+                print("Invalid selection.")
+
+        print(prompt, end="", flush=True)
+        buf = []
+        while True:
+            key = read_keypress()
+            if key is None:
+                raw = input().strip()
+                if is_escape(raw) or raw.lower() in ("q", "quit"):
+                    raise UserAbort()
+                if raw.lower() in ("s", "skip"):
+                    return None
+                if raw.isdigit():
+                    idx = int(raw)
+                    if 1 <= idx <= max_value:
+                        return idx
+                print("Invalid selection.")
+                print(prompt, end="", flush=True)
+                buf = []
+                continue
+
+            if key == "ESC":
+                print()
+                raise UserAbort()
+            if key == "ENTER":
+                if not buf:
+                    continue
+                raw = "".join(buf)
+                if raw.isdigit():
+                    idx = int(raw)
+                    if 1 <= idx <= max_value:
+                        print()
+                        return idx
+                print("\nInvalid selection.")
+                print(prompt, end="", flush=True)
+                buf = []
+                continue
+            if key == "BACKSPACE":
+                if buf:
+                    buf.pop()
+                    sys.stdout.write("\b \b")
+                    sys.stdout.flush()
+                continue
+            if len(key) == 1 and key.lower() == "s":
+                print()
+                return None
+            if len(key) == 1 and key.isdigit():
+                buf.append(key)
+                sys.stdout.write(key)
+                sys.stdout.flush()
+
     def format_plex_item(item) -> str:
         title = getattr(item, "title", str(item))
         year = getattr(item, "year", None)
@@ -100,19 +316,13 @@ def run_collection_builder():
         for i, item in enumerate(results, 1):
             print(f"{i}. {format_plex_item(item)}")
 
-        while True:
-            choice = input(
-                "Pick a number, 's' to skip, or 'q'/'Esc' to cancel: "
-            ).strip().lower()
-            if choice in ("s", "skip"):
-                return None
-            if choice in ("q", "quit") or is_escape(choice):
-                raise UserAbort()
-            if choice.isdigit():
-                idx = int(choice)
-                if 1 <= idx <= len(results):
-                    return results[idx - 1]
-            print("Invalid selection.")
+        idx = read_index_or_skip(
+            len(results),
+            "Pick a number + Enter, 's' to skip, or Esc to cancel: ",
+        )
+        if idx is None:
+            return None
+        return results[idx - 1]
 
     dry_run = False
     while True:
@@ -155,8 +365,8 @@ def run_collection_builder():
             Fore.LIGHTBLACK_EX
             + f"{emojis.INFO}  You can return to this menu after each collection is created.\n"
         )
-        mode = input("Select an option: ").strip()
-        if is_escape(mode):
+        mode = read_menu_choice("Select an option (Esc to exit): ", set("123456"))
+        if mode == "ESC":
             mode = "6"
 
         if mode not in ("1", "2", "3", "4", "5", "6"):
@@ -220,8 +430,10 @@ def run_collection_builder():
                         + Fore.RESET
                         + f" {emojis.BACK} Return to main menu\n"
                     )
-                    choice = input("Select an option: ").strip()
-                    if is_escape(choice):
+                    choice = read_menu_choice(
+                        "Select an option (Esc to go back): ", set("12345")
+                    )
+                    if choice == "ESC":
                         break
                     if choice == "1":
                         config["PLEX_TOKEN"] = input("Enter new Plex Token: ").strip()
