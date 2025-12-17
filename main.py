@@ -170,6 +170,45 @@ def read_number(max_value: int, prompt: str) -> Optional[int]:
             sys.stdout.flush()
 
 
+def read_line(prompt: str, allow_escape: bool = True) -> Optional[str]:
+    """
+    Reads a full line of text, but supports true Escape (no Enter) when stdin is a TTY.
+    Returns None when Esc is pressed (and allow_escape is True).
+    """
+    if not sys.stdin.isatty():
+        text = input(prompt)
+        if allow_escape and is_escape(text):
+            return None
+        return text
+
+    print(prompt, end="", flush=True)
+    buf = []
+    while True:
+        key = read_keypress()
+        if key is None:
+            text = input().strip()
+            if allow_escape and is_escape(text):
+                return None
+            return text
+
+        if key == "ESC" and allow_escape:
+            print()
+            return None
+        if key == "ENTER":
+            print()
+            return "".join(buf)
+        if key == "BACKSPACE":
+            if buf:
+                buf.pop()
+                sys.stdout.write("\b \b")
+                sys.stdout.flush()
+            continue
+        if len(key) == 1 and key.isprintable():
+            buf.append(key)
+            sys.stdout.write(key)
+            sys.stdout.flush()
+
+
 def load_config():
     # Load credentials from config.json, or return empty defaults if it doesn't exist
     if not os.path.exists(CONFIG_FILE):
@@ -527,9 +566,12 @@ def run_collection_builder():
 
         if mode == "1":
             print("Type 'back' or 'Esc' to return to the main menu.")
-            collection_name = input("Enter a name for your new collection: ").strip()
-            if collection_name.lower() == "back" or is_escape(collection_name):
+            collection_name = read_line(
+                "Enter a name for your new collection (Esc to cancel): "
+            )
+            if collection_name is None or collection_name.strip().lower() == "back":
                 continue
+            collection_name = collection_name.strip()
             plex_token = config.get("PLEX_TOKEN")
             plex_url = config.get("PLEX_URL")
             if not plex_token or not plex_url:
@@ -540,7 +582,13 @@ def run_collection_builder():
                 continue
             print("\nEnter movie titles one per line. Leave a blank line to finish:")
             while True:
-                title = input()
+                title = read_line("", allow_escape=True)
+                if title is None:
+                    print("Canceled. Returning to main menu.")
+                    pause()
+                    titles = []
+                    collection_name = None
+                    break
                 if not title.strip():
                     break
                 titles.append(title.strip())
@@ -853,7 +901,10 @@ def pick_from_list_case_insensitive(prompt, choices, back_allowed=True):
     # Keeps prompting until a valid choice is entered.
     lowered = {c.lower(): c for c in choices}
     while True:
-        choice = input(prompt).strip()
+        choice = read_line(prompt, allow_escape=True)
+        if choice is None:
+            return None if back_allowed else None
+        choice = choice.strip()
         if back_allowed and (choice.lower() == "back" or is_escape(choice)):
             return None
         if choice.lower() in lowered:
