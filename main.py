@@ -631,6 +631,7 @@ def process_and_create_collection(collection_name, titles, config, pause_fn):
     found_movies, not_found, matched_pairs = [], [], []
     seen_rating_keys = set()
 
+    # This is the logic that was previously in run_collection_builder
     # ... (The rest of the Plex processing logic will go here in the next step)
 
 
@@ -690,69 +691,7 @@ def run_collection_builder():
             continue
 
 
-        # --- All modes converge here ---
-        # process_and_create_collection(collection_name, titles, config, pause)
-        if MOCK_MODE:
-            print("\n[MOCK MODE ENABLED]")
-            print(f"Simulating search in Plex for {len(titles)} titles...")
-            for t in titles:
-                print(f"- Would add '{t}' to collection '{collection_name}'.")
-            print(f"Finished. Would create collection with {len(titles)} movies.")
-            pause()
-            continue
-
-        # Ensure Plex credential entered
-        plex_token = config.get("PLEX_TOKEN")
-        plex_url = config.get("PLEX_URL")
-        if not plex_token or not plex_url:
-            print(Fore.RED + f"\n{emojis.CROSS} Missing or invalid Plex Token or URL.")
-            pause()
-            continue
-
-        # Try connecting to Plex
-        try:
-            plex_manager = PlexManager(plex_token, plex_url)
-            library = plex_manager.get_movie_library("Movies")
-            if not library:
-                raise ConnectionError("Movie library not found.")
-        except Exception as e:
-            print(Fore.RED + f"\n{emojis.CROSS} Could not connect to Plex: {e}")
-            print("Please make sure your Plex Token and URL are correct.\n")
-            pause()
-            continue
-
-        found_movies, not_found, matched_pairs, seen_rating_keys = [], [], [], set()
-        try:
-            for raw in titles:
-                title, year = extract_title_and_year(raw)
-                try:
-                    results = (
-                        library.search(title, year=year)
-                        if year
-                        else library.search(title)
-                    )
-                    if not results and year:
-                        results = library.search(title)
-
-                    chosen = pick_plex_match(raw, results)
-                    if chosen is None:
-                        not_found.append(raw)
-                        continue
-
-                    rating_key = str(getattr(chosen, "ratingKey", ""))
-                    if rating_key and rating_key in seen_rating_keys:
-                        continue
-                    if rating_key:
-                        seen_rating_keys.add(rating_key)
-                    found_movies.append(chosen)
-                    matched_pairs.append((raw, chosen))
-                except (AttributeError, TypeError, ValueError) as e:
-                    print(f"Error searching for '{raw}': {e}")
-                    not_found.append(raw)
-        except UserAbort:
-            print("Canceled. Returning to main menu.")
-            pause()
-            continue
+        process_and_create_collection(collection_name, titles, config, pause)
 
         print(f"\nFound {len(found_movies)} movies in Plex.")
         if not_found and len(not_found) < len(titles):
