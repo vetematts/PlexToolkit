@@ -261,6 +261,89 @@ def check_credentials():
     )
 
 
+def handle_main_menu() -> str:
+    """Displays the main menu and returns the user's selection."""
+    print(Fore.BLUE + f"{emojis.CLAPPER} MAIN MENU:\n")
+    print(Fore.GREEN + "1." + Fore.RESET + f" {emojis.MANUAL} Manual Entry\n")
+    print(
+        Fore.GREEN
+        + "2."
+        + Fore.RESET
+        + f" {emojis.FRANCHISE}  Known Franchise (e.g. Star Wars, Harry Potter)\n"
+    )
+    print(
+        Fore.GREEN
+        + "3."
+        + Fore.RESET
+        + f" {emojis.STUDIO}  Studio / Keyword (e.g. A24, Pixar)\n"
+    )
+    print(
+        Fore.YELLOW
+        + "4."
+        + Fore.RESET
+        + f" {emojis.SETTINGS}  Settings & Credentials\n"
+    )
+    print(Fore.RED + "5." + Fore.RESET + f" {emojis.EXIT} Exit\n")
+    print(
+        Fore.LIGHTBLACK_EX
+        + f"{emojis.INFO}  You can return to this menu after each collection is created.\n"
+    )
+    mode = read_menu_choice("Select an option (Esc to exit): ", set("12345"))
+    if mode == "ESC":
+        return "5"
+    return mode
+
+
+def handle_credentials_menu():
+    """Displays and manages the credentials configuration submenu."""
+    while True:
+        # Clear terminal screen for cleanliness in a cross-platform way.
+        if os.name == "nt":  # For Windows
+            os.system("cls")
+        else:  # For macOS and Linux
+            os.system("clear")
+        print(Fore.CYAN + f"{emojis.CONFIGURE} CONFIGURE CREDENTIALS")
+        print(Fore.GREEN + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+        print(Fore.YELLOW + "1." + Fore.RESET + f" {emojis.KEY} Set Plex Token\n")
+        print(Fore.YELLOW + "2." + Fore.RESET + f" {emojis.URL} Set Plex URL\n")
+        print(Fore.BLUE + "3." + Fore.RESET + f" {emojis.CLAPPER} Set TMDb API Key\n")
+        print(Fore.GREEN + "4." + Fore.RESET + f" {emojis.BOOK} Show current values\n")
+        print(Fore.RED + "5." + Fore.RESET + f" {emojis.BACK} Return to main menu\n")
+        choice = read_menu_choice("Select an option (Esc to go back): ", set("12345"))
+
+        def pause(msg: str = "Press Enter to return to the menu..."):
+            input(msg)
+
+        if choice == "ESC" or choice == "5":
+            break
+        if choice == "1":
+            config["PLEX_TOKEN"] = input("Enter new Plex Token: ").strip()
+            save_config(config)
+            print(Fore.GREEN + f"{emojis.CHECK} Plex Token saved successfully!\n")
+            pause()
+        elif choice == "2":
+            config["PLEX_URL"] = input("Enter new Plex URL: ").strip()
+            save_config(config)
+            print(Fore.GREEN + f"{emojis.CHECK} Plex URL saved successfully!\n")
+            pause()
+        elif choice == "3":
+            config["TMDB_API_KEY"] = input("Enter new TMDb API Key: ").strip()
+            save_config(config)
+            print(Fore.GREEN + f"{emojis.CHECK} TMDb API Key saved successfully!\n")
+            pause()
+        elif choice == "4":
+            if os.name == "nt":
+                os.system("cls")
+            else:
+                os.system("clear")
+            print(Fore.CYAN + f"{emojis.BOOK} Current Configuration:\n")
+            print(json.dumps(config, indent=4))
+            pause("\nPress Enter to return to the credentials menu...")
+        else:
+            print("Invalid choice. Try again.")
+            pause()
+
+
 def run_collection_builder():
     # Main interactive loop. Stays in a single while-loop and avoids repeating run_collection_builder().
     # Returns to main menu with `continue`.
@@ -367,35 +450,7 @@ def run_collection_builder():
         welcome()
         check_credentials()
 
-        # Main menu
-        print(Fore.BLUE + f"{emojis.CLAPPER} MAIN MENU:\n")
-        print(Fore.GREEN + "1." + Fore.RESET + f" {emojis.MANUAL} Manual Entry\n")
-        print(
-            Fore.GREEN
-            + "2."
-            + Fore.RESET
-            + f" {emojis.FRANCHISE}  Known Franchise (e.g. Star Wars, Harry Potter)\n"
-        )
-        print(
-            Fore.GREEN
-            + "3."
-            + Fore.RESET
-            + f" {emojis.STUDIO}  Studio / Keyword (e.g. A24, Pixar)\n"
-        )
-        print(
-            Fore.YELLOW
-            + "4."
-            + Fore.RESET
-            + f" {emojis.SETTINGS}  Settings & Credentials\n"
-        )
-        print(Fore.RED + "5." + Fore.RESET + f" {emojis.EXIT} Exit\n")
-        print(
-            Fore.LIGHTBLACK_EX
-            + f"{emojis.INFO}  You can return to this menu after each collection is created.\n"
-        )
-        mode = read_menu_choice("Select an option (Esc to exit): ", set("12345"))
-        if mode == "ESC":
-            mode = "5"
+        mode = handle_main_menu()
 
         if mode not in ("1", "2", "3", "4", "5"):
             print("Invalid selection. Please choose a valid menu option (1-5).")
@@ -408,94 +463,7 @@ def run_collection_builder():
 
         # Credentials settings
         if mode == "4":
-
-            def configure_credentials():
-                # Submenu for credentials
-                while True:
-                    # Clear terminal screen for cleanliness in a cross-platform way.
-                    if os.name == "nt":  # For Windows
-                        os.system("cls")
-                    else:  # For macOS and Linux
-                        os.system("clear")
-                    print(Fore.CYAN + f"{emojis.CONFIGURE} CONFIGURE CREDENTIALS")
-                    print(Fore.GREEN + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
-                    print(
-                        Fore.YELLOW
-                        + "1."
-                        + Fore.RESET
-                        + f" {emojis.KEY} Set Plex Token\n"
-                    )
-                    print(
-                        Fore.YELLOW
-                        + "2."
-                        + Fore.RESET
-                        + f" {emojis.URL} Set Plex URL\n"
-                    )
-                    print(
-                        Fore.BLUE
-                        + "3."
-                        + Fore.RESET
-                        + f" {emojis.CLAPPER} Set TMDb API Key\n"
-                    )
-                    print(
-                        Fore.GREEN
-                        + "4."
-                        + Fore.RESET
-                        + f" {emojis.BOOK} Show current values\n"
-                    )
-                    print(
-                        Fore.RED
-                        + "5."
-                        + Fore.RESET
-                        + f" {emojis.BACK} Return to main menu\n"
-                    )
-                    choice = read_menu_choice(
-                        "Select an option (Esc to go back): ", set("12345")
-                    )
-                    if choice == "ESC":
-                        break
-                    if choice == "1":
-                        config["PLEX_TOKEN"] = input("Enter new Plex Token: ").strip()
-                        save_config(config)
-                        print(
-                            Fore.GREEN
-                            + f"{emojis.CHECK} Plex Token saved successfully!\n"
-                        )
-                        pause()
-                    elif choice == "2":
-                        config["PLEX_URL"] = input("Enter new Plex URL: ").strip()
-                        save_config(config)
-                        print(
-                            Fore.GREEN
-                            + f"{emojis.CHECK} Plex URL saved successfully!\n"
-                        )
-                        pause()
-                    elif choice == "3":
-                        config["TMDB_API_KEY"] = input(
-                            "Enter new TMDb API Key: "
-                        ).strip()
-                        save_config(config)
-                        print(
-                            Fore.GREEN
-                            + f"{emojis.CHECK} TMDb API Key saved successfully!\n"
-                        )
-                        pause()
-                    elif choice == "4":
-                        # Clear terminal screen for cleanliness in a cross-platform way.
-                        if os.name == "nt":  # For Windows
-                            os.system("cls")
-                        else:  # For macOS and Linux
-                            os.system("clear")
-                        print(Fore.CYAN + f"{emojis.BOOK} Current Configuration:\n")
-                        print(json.dumps(config, indent=4))
-                        pause("\nPress Enter to return to the credentials menu...")
-                    elif choice == "5":
-                        break
-                    else:
-                        print("Invalid choice. Try again.")
-                        pause()
-
-            configure_credentials()
+            handle_credentials_menu()
             continue  # back to main loop
 
         # Collection Creation (modes 1-3)
