@@ -9,6 +9,7 @@ import json
 import re
 import sys
 import contextlib
+from datetime import datetime
 from typing import Optional
 
 from colorama import init, Fore
@@ -216,6 +217,8 @@ def load_config():
         "PLEX_URL": "",
         "TMDB_API_KEY": "",
         "PLEX_LIBRARY": "Movies",
+        "PLEX_LAST_TESTED": "",
+        "TMDB_LAST_TESTED": "",
     }
     if not os.path.exists(CONFIG_FILE):
         return defaults.copy()
@@ -231,6 +234,10 @@ def save_config(cfg):
     # Accepts a dictionary of credentials.
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(cfg, f, indent=4)
+
+
+def _now_iso():
+    return datetime.utcnow().isoformat() + "Z"
 
 
 def test_plex_connection(cfg):
@@ -262,6 +269,8 @@ def test_plex_connection(cfg):
             Fore.GREEN
             + f"{emojis.CHECK} Plex connection successful. Library '{library_name}' is available.\n"
         )
+        cfg["PLEX_LAST_TESTED"] = _now_iso()
+        save_config(cfg)
         return True
     except Exception as e:
         print(Fore.RED + f"{emojis.CROSS} Plex connection test failed: {e}\n")
@@ -286,6 +295,8 @@ def test_tmdb_connection(cfg):
         # Perform a minimal search to validate the key.
         tmdb.search_movies("test", limit=1)
         print(Fore.GREEN + f"{emojis.CHECK} TMDb connection successful.\n")
+        cfg["TMDB_LAST_TESTED"] = _now_iso()
+        save_config(cfg)
         return True
     except Exception as e:
         print(Fore.RED + f"{emojis.CROSS} TMDb connection test failed: {e}\n")
@@ -445,6 +456,11 @@ def handle_credentials_menu():
                 os.system("clear")
             print(Fore.CYAN + f"{emojis.BOOK} Current Configuration:\n")
             print(json.dumps(config, indent=4))
+            last_plex = config.get("PLEX_LAST_TESTED", "")
+            last_tmdb = config.get("TMDB_LAST_TESTED", "")
+            print("\nConnection status:")
+            print(f"- Plex last tested: {last_plex or 'never'}")
+            print(f"- TMDb last tested: {last_tmdb or 'never'}")
             pause("\nPress Enter to return to the credentials menu...")
         else:
             print("Invalid choice. Try again.")
