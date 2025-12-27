@@ -364,7 +364,7 @@ def handle_main_menu() -> str:
         + Fore.RESET
         + f" {emojis.SETTINGS}  Settings & Credentials\n"
     )
-    print(Fore.YELLOW + "5." + Fore.RESET + f" {emojis.CONFIGURE} Tools / Fix Posters\n")
+    print(Fore.YELLOW + "5." + Fore.RESET + f" {emojis.CONFIGURE} Tools / Fix Artwork\n")
     print(Fore.RED + "6." + Fore.RESET + f" {emojis.EXIT} Exit\n")
     print(
         Fore.LIGHTBLACK_EX
@@ -824,12 +824,12 @@ def run_poster_tool(config, pause_fn):
     if os.name == "nt": os.system("cls")
     else: os.system("clear")
 
-    print(Fore.CYAN + f"{emojis.CONFIGURE} TOOLS: Fix Posters (TMDb)")
+    print(Fore.CYAN + f"{emojis.CONFIGURE} TOOLS: Fix Artwork (TMDb)")
     print(Fore.GREEN + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
-    print("This tool scans movies and selects the TMDb poster if available.\n")
+    print("This tool scans movies and selects the TMDb poster and background if available.\n")
 
-    print(Fore.YELLOW + "1." + Fore.RESET + " Fix posters for a specific Collection")
-    print(Fore.YELLOW + "2." + Fore.RESET + " Fix posters for the ENTIRE Library (Slow)")
+    print(Fore.YELLOW + "1." + Fore.RESET + " Fix artwork for a specific Collection")
+    print(Fore.YELLOW + "2." + Fore.RESET + " Fix artwork for the ENTIRE Library (Slow)")
     print(Fore.RED + "3." + Fore.RESET + f" {emojis.BACK} Return to main menu\n")
 
     choice = read_menu_choice("Select an option: ", set("123"))
@@ -874,7 +874,8 @@ def run_poster_tool(config, pause_fn):
         print(f"Processing {len(items_to_process)} items...\n")
         for item in items_to_process:
             pm.set_tmdb_poster(item)
-        print(f"\n{emojis.CHECK} Finished processing posters.")
+            pm.set_tmdb_art(item)
+        print(f"\n{emojis.CHECK} Finished processing artwork.")
 
     pause_fn()
 
