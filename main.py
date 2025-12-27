@@ -389,7 +389,7 @@ def handle_credentials_menu():
         print(Fore.YELLOW + "2." + Fore.RESET + f" {emojis.URL} Set Plex URL\n")
         print(Fore.BLUE + "3." + Fore.RESET + f" {emojis.CLAPPER} Set TMDb API Key\n")
         print(Fore.CYAN + "4." + Fore.RESET + f" {emojis.MOVIE} Set Plex Library Name\n")
-        print(Fore.GREEN + "5." + Fore.RESET + f" {emojis.INFO} Test Connections (Plex + TMDb)\n")
+        print(Fore.GREEN + "5." + Fore.RESET + f" {emojis.INFO}  Test Connections (Plex + TMDb)\n")
         print(Fore.GREEN + "6." + Fore.RESET + f" {emojis.BOOK} Show current values\n")
         print(Fore.RED + "7." + Fore.RESET + f" {emojis.BACK} Return to main menu\n")
         choice = read_menu_choice("Select an option (Esc to go back): ", set("1234567"))
