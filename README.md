@@ -4,8 +4,6 @@ This is a custom Python application that helps users manage and organize their P
 
 <img width="1020" height="1472" alt="CleanShot 2025-12-28 at 19 58 59@2x" src="https://github.com/user-attachments/assets/75c8cb63-af1e-4580-a923-85216c1d76af" />
 
-<!-- <img width="1244" height="1492" alt="PlexCollectionCreatorTerminal" src="https://github.com/user-attachments/assets/e9e16e29-ed06-4cec-a265-25cf4d6e5f14" /> -->
-
 ## 🛠️ Setup
 
 1. **Clone the repository.**
