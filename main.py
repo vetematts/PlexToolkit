@@ -364,14 +364,15 @@ def handle_main_menu() -> str:
         + Fore.RESET
         + f" {emojis.SETTINGS}  Settings & Credentials\n"
     )
-    print(Fore.RED + "5." + Fore.RESET + f" {emojis.EXIT} Exit\n")
+    print(Fore.YELLOW + "5." + Fore.RESET + f" {emojis.CONFIGURE} Tools / Fix Artwork\n")
+    print(Fore.RED + "6." + Fore.RESET + f" {emojis.EXIT} Exit\n")
     print(
         Fore.LIGHTBLACK_EX
         + f"{emojis.INFO}  You can return to this menu after each collection is created.\n"
     )
-    mode = read_menu_choice("Select an option (Esc to exit): ", set("12345"))
+    mode = read_menu_choice("Select an option (Esc to exit): ", set("123456"))
     if mode == "ESC":
-        return "5"
+        return "6"
     return mode
 
 
@@ -818,6 +819,66 @@ def process_and_create_collection(collection_name, titles, config, pause_fn):
     print(f"\n{emojis.CHECK} Created collection '{collection_name}' with {len(found_movies)} movies.")
     pause_fn()
 
+def run_poster_tool(config, pause_fn):
+    """Sub-menu for fixing posters using TMDb."""
+    if os.name == "nt": os.system("cls")
+    else: os.system("clear")
+
+    print(Fore.CYAN + f"{emojis.CONFIGURE} TOOLS: Fix Artwork (TMDb)")
+    print(Fore.GREEN + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+    print("This tool scans movies and selects the TMDb poster and background if available.\n")
+
+    print(Fore.YELLOW + "1." + Fore.RESET + " Fix artwork for a specific Collection")
+    print(Fore.YELLOW + "2." + Fore.RESET + " Fix artwork for the ENTIRE Library (Slow)")
+    print(Fore.RED + "3." + Fore.RESET + f" {emojis.BACK} Return to main menu\n")
+
+    choice = read_menu_choice("Select an option: ", set("123"))
+
+    if choice == "3" or choice == "ESC":
+        return
+
+    # Connect to Plex
+    plex_token = config.get("PLEX_TOKEN")
+    plex_url = config.get("PLEX_URL")
+    library_name = config.get("PLEX_LIBRARY", "Movies")
+
+    try:
+        pm = PlexManager(plex_token, plex_url)
+        library = pm.get_movie_library(library_name)
+        if not library:
+            pause_fn()
+            return
+    except Exception as e:
+        print(Fore.RED + f"Error connecting to Plex: {e}")
+        pause_fn()
+        return
+
+    items_to_process = []
+
+    if choice == "1":
+        col_name = read_line("Enter the exact Collection Name: ")
+        if not col_name: return
+        try:
+            # Get specific collection
+            items_to_process = library.collections(title=col_name)[0].items()
+            print(f"\nFound {len(items_to_process)} movies in collection '{col_name}'.")
+        except IndexError:
+            print(Fore.RED + f"\nCollection '{col_name}' not found.")
+            pause_fn()
+            return
+    elif choice == "2":
+        print("\nFetching all movies from library... this may take a moment.")
+        items_to_process = library.all()
+
+    if items_to_process:
+        print(f"Processing {len(items_to_process)} items...\n")
+        for item in items_to_process:
+            pm.set_tmdb_poster(item)
+            pm.set_tmdb_art(item)
+        print(f"\n{emojis.CHECK} Finished processing artwork.")
+
+    pause_fn()
+
 def run_collection_builder():
     # Main interactive loop. Stays in a single while-loop and avoids repeating run_collection_builder().
     # Returns to main menu with `continue`.
@@ -831,12 +892,12 @@ def run_collection_builder():
 
         mode = handle_main_menu()
 
-        if mode not in ("1", "2", "3", "4", "5"):
-            print("Invalid selection. Please choose a valid menu option (1-5).")
+        if mode not in ("1", "2", "3", "4", "5", "6"):
+            print("Invalid selection. Please choose a valid menu option (1-6).")
             pause()
             continue
 
-        if mode == "5":
+        if mode == "6":
             print(f"{emojis.WAVE} Goodbye!")
             return
 
@@ -844,6 +905,11 @@ def run_collection_builder():
         if mode == "4":
             handle_credentials_menu()
             continue  # back to main loop
+
+        # Tools
+        if mode == "5":
+            run_poster_tool(config, pause)
+            continue
 
         # Collection Creation (modes 1-3)
         titles = []
