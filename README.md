@@ -54,6 +54,21 @@ On the first run, the tool will create a `config.json` file. You can configure t
 *   **TMDb API Key**: Get a free API key from themoviedb.org (required for artwork features).
 *   **Plex Library**: The name of your movie library (default is "Movies").
 
+### 📎 Finding Your Credentials
+
+**Plex Token:**
+1.  Sign in at [app.plex.tv](https://app.plex.tv).
+2.  Click on any Movie/Show → **⋮** (Three Dots) → **Get Info**.
+3.  Click **View XML** at the bottom.
+4.  In the browser URL, copy the string after `X-Plex-Token=`.
+
+**Plex URL:**
+1.  Open Plex in your browser.
+2.  Go to **Settings** (wrench icon) → **Remote Access**.
+3.  Copy the IP address shown under "Private" (e.g., `http://192.168.1.10:32400`).
+    *   Use the **Private** IP if you are on the same network (home Wi-Fi).
+    *   Use the **Public** IP if you are outside your network.
+
 ## Usage 🎮
 
 1.  **Manual Entry**: Type movie names manually.
