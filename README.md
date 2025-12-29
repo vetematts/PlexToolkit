@@ -25,11 +25,22 @@ Plex Toolkit is a Python application designed to help manage Plex movie librarie
 ## Installation 🚀
 
 1.  **Clone or Download** the repository.
-2.  **Install Dependencies**:
+2.  **Create a Virtual Environment** (Recommended):
+    Using a virtual environment keeps dependencies isolated from your system.
+    ```bash
+    python -m venv venv
+
+    # Windows:
+    venv\Scripts\activate
+
+    # macOS / Linux:
+    source venv/bin/activate
+    ```
+3.  **Install Dependencies**:
     ```bash
     pip install PlexAPI tmdbv3api colorama requests
     ```
-3.  **Run the App**:
+4.  **Run the App**:
     ```bash
     python main.py
     ```
