@@ -401,6 +401,8 @@ def handle_credentials_menu():
         if choice == "ESC" or choice == "7":
             break
         if choice == "1":
+            if os.name == "nt": os.system("cls")
+            else: os.system("clear")
             new_token = read_line("Enter new Plex Token (Esc to cancel): ")
             if new_token is None:
                 continue
@@ -415,6 +417,8 @@ def handle_credentials_menu():
             test_plex_connection(config)
             pause()
         elif choice == "2":
+            if os.name == "nt": os.system("cls")
+            else: os.system("clear")
             new_url = read_line("Enter new Plex URL (Esc to cancel): ")
             if new_url is None:
                 continue
@@ -437,6 +441,8 @@ def handle_credentials_menu():
             test_plex_connection(config)
             pause()
         elif choice == "3":
+            if os.name == "nt": os.system("cls")
+            else: os.system("clear")
             new_key = read_line("Enter new TMDb API Key (Esc to cancel): ")
             if new_key is None:
                 continue
@@ -447,6 +453,8 @@ def handle_credentials_menu():
             pause()
         elif choice == "4":
             current_library = config.get("PLEX_LIBRARY", "Movies")
+            if os.name == "nt": os.system("cls")
+            else: os.system("clear")
             new_library = read_line(f"Enter Plex library name (current: {current_library}) (Esc to cancel): ")
             if new_library is None:
                 continue
