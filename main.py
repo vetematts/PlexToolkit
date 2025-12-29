@@ -495,7 +495,6 @@ def run_manual_mode(pause_fn):
     """Handles the manual movie entry mode. Returns (collection_name, titles) or (None, None)."""
     if os.name == "nt": os.system("cls")
     else: os.system("clear")
-    print("Type 'back' or 'Esc' to return to the main menu.")
     collection_name = read_line(
         "Enter a name for your new collection (Esc to cancel): "
     )
@@ -520,6 +519,8 @@ def run_manual_mode(pause_fn):
 
 def run_franchise_mode(tmdb, pause_fn):
     """Handles the franchise/series mode. Returns (collection_name, titles) or (None, None)."""
+    if os.name == "nt": os.system("cls")
+    else: os.system("clear")
     known_collections = {
         "Alien": 8091, "Back to the Future": 264, "Despicable Me": 86066,
         "Evil Dead": 1960, "Fast & Furious": 9485, "Harry Potter": 1241,
@@ -564,6 +565,8 @@ def run_franchise_mode(tmdb, pause_fn):
 
 def run_studio_mode(tmdb, api_key, pause_fn):
     """Handles the studio/keyword mode. Returns (collection_name, titles) or (None, None)."""
+    if os.name == "nt": os.system("cls")
+    else: os.system("clear")
     studio_map = {
         "a24": {"company": 41077}, "pixar": {"company": 3},
         "studio ghibli": {"company": 10342}, "mcu": {"keyword": 180547},
