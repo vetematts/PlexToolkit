@@ -493,9 +493,9 @@ def run_manual_mode(pause_fn):
     """Handles the manual movie entry mode. Returns (collection_name, titles) or (None, None)."""
     if os.name == "nt": os.system("cls")
     else: os.system("clear")
-    print(Fore.CYAN + f"{emojis.MANUAL} Manual Entry")
+    print(Fore.CYAN + f"{emojis.MANUAL} Manual Entry\n")
     collection_name = read_line(
-        "Enter a name for your new collection (Esc to cancel): "
+        Fore.LIGHTBLACK_EX + "Enter a name for your new collection (Esc to cancel): " + Fore.RESET
     )
     if collection_name is None:
         return None, None
