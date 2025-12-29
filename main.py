@@ -320,7 +320,7 @@ def welcome():
     else:  # For macOS and Linux
         os.system("clear")
     print_plex_logo_ascii()
-    print(Fore.CYAN + f"\n{emojis.MOVIE} Welcome to the Plex Collection Creator!")
+    print(Fore.CYAN + f"\n{emojis.MOVIE} Welcome to Plex Toolkit!")
     print(Fore.YELLOW + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
 
 
