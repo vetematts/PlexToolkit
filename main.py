@@ -16,7 +16,7 @@ from colorama import init, Fore
 import emojis
 from plex_manager import PlexManager
 from tmdb_search import TMDbSearch
-from styling import print_plex_logo_ascii
+from styling import print_plex_logo_ascii, PLEX_YELLOW
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
 
@@ -320,7 +320,7 @@ def welcome():
     else:  # For macOS and Linux
         os.system("clear")
     print_plex_logo_ascii()
-    print(Fore.CYAN + f"\n{emojis.MOVIE} Welcome to the Plex Toolkit!\n")
+    print(PLEX_YELLOW + f"\n{emojis.MOVIE} Welcome to the Plex Toolkit!\n")
 
 
 def check_credentials():
@@ -343,7 +343,7 @@ def check_credentials():
 
 def handle_main_menu() -> str:
     """Displays the main menu and returns the user's selection."""
-    print(Fore.BLUE + f"{emojis.CLAPPER} MAIN MENU:\n")
+    print(PLEX_YELLOW + f"{emojis.CLAPPER} MAIN MENU:\n")
     print(Fore.GREEN + "1." + Fore.RESET + f" {emojis.MANUAL} Manual Entry\n")
     print(
         Fore.GREEN
@@ -383,7 +383,7 @@ def handle_credentials_menu():
             os.system("cls")
         else:  # For macOS and Linux
             os.system("clear")
-        print(Fore.CYAN + f"{emojis.CONFIGURE} CONFIGURE CREDENTIALS")
+        print(PLEX_YELLOW + f"{emojis.CONFIGURE} CONFIGURE CREDENTIALS")
         print(Fore.YELLOW + "1." + Fore.RESET + f" {emojis.KEY} Set Plex Token\n")
         print(Fore.YELLOW + "2." + Fore.RESET + f" {emojis.URL} Set Plex URL\n")
         print(Fore.BLUE + "3." + Fore.RESET + f" {emojis.CLAPPER} Set TMDb API Key\n")
@@ -493,7 +493,7 @@ def run_manual_mode(pause_fn):
     """Handles the manual movie entry mode. Returns (collection_name, titles) or (None, None)."""
     if os.name == "nt": os.system("cls")
     else: os.system("clear")
-    print(Fore.CYAN + f"{emojis.MANUAL} Manual Entry\n")
+    print(PLEX_YELLOW + f"{emojis.MANUAL} Manual Entry\n")
     collection_name = read_line(
         Fore.LIGHTBLACK_EX + "Enter a name for your new collection (Esc to cancel): " + Fore.RESET
     )
@@ -520,7 +520,7 @@ def run_franchise_mode(tmdb, pause_fn):
     """Handles the franchise/series mode. Returns (collection_name, titles) or (None, None)."""
     if os.name == "nt": os.system("cls")
     else: os.system("clear")
-    print(Fore.CYAN + f"{emojis.FRANCHISE}  Known Franchise Mode")
+    print(PLEX_YELLOW + f"{emojis.FRANCHISE}  Known Franchise Mode")
     known_collections = {
         "Alien": 8091, "Back to the Future": 264, "Despicable Me": 86066,
         "Evil Dead": 1960, "Fast & Furious": 9485, "Harry Potter": 1241,
@@ -567,7 +567,7 @@ def run_studio_mode(tmdb, api_key, pause_fn):
     """Handles the studio/keyword mode. Returns (collection_name, titles) or (None, None)."""
     if os.name == "nt": os.system("cls")
     else: os.system("clear")
-    print(Fore.CYAN + f"{emojis.STUDIO}  Studio / Keyword Mode")
+    print(PLEX_YELLOW + f"{emojis.STUDIO}  Studio / Keyword Mode")
     studio_map = {
         "a24": {"company": 41077}, "pixar": {"company": 3},
         "studio ghibli": {"company": 10342}, "mcu": {"keyword": 180547},
@@ -856,7 +856,7 @@ def run_poster_tool(config, pause_fn):
     if os.name == "nt": os.system("cls")
     else: os.system("clear")
 
-    print(Fore.CYAN + f"{emojis.CONFIGURE} TOOLS: Fix Artwork (TMDb)")
+    print(PLEX_YELLOW + f"{emojis.CONFIGURE} TOOLS: Fix Artwork (TMDb)")
     print("This tool scans movies and selects the TMDb poster and background if available.\n")
 
     print(Fore.YELLOW + "1." + Fore.RESET + " Fix artwork for a specific Collection")
