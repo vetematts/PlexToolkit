@@ -301,7 +301,7 @@ def handle_main_menu() -> str:
         + Fore.RESET
         + f" {emojis.SETTINGS}  Settings & Credentials\n"
     )
-    print(Fore.YELLOW + "5." + Fore.RESET + f" {emojis.CONFIGURE} Tools / Fix Artwork\n")
+    print(Fore.YELLOW + "5." + Fore.RESET + f" {emojis.CONFIGURE} Tools / Fix Posters & Backgrounds\n")
     print(Fore.RED + "6." + Fore.RESET + f" {emojis.EXIT} Exit\n")
     print(
         Fore.LIGHTBLACK_EX
@@ -794,11 +794,11 @@ def run_poster_tool(config, pause_fn):
     if os.name == "nt": os.system("cls")
     else: os.system("clear")
 
-    print(PLEX_YELLOW + f"{emojis.CONFIGURE} TOOLS: Fix Artwork (TMDb)")
+    print(PLEX_YELLOW + f"{emojis.CONFIGURE} TOOLS: Fix Posters & Backgrounds (TMDb)")
     print("This tool scans movies and selects the TMDb poster and background if available.\n")
 
-    print(Fore.YELLOW + "1." + Fore.RESET + " Fix artwork for a specific Collection")
-    print(Fore.YELLOW + "2." + Fore.RESET + " Fix artwork for the ENTIRE Library (Slow)")
+    print(Fore.YELLOW + "1." + Fore.RESET + " Fix Posters & Backgrounds for a specific Collection")
+    print(Fore.YELLOW + "2." + Fore.RESET + " Fix Posters & Backgrounds for the ENTIRE Library (Slow)")
     print(Fore.RED + "3." + Fore.RESET + f" {emojis.BACK} Return to main menu\n")
 
     choice = read_menu_choice("Select an option: ", set("123"))

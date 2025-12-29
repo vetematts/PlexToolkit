@@ -11,8 +11,8 @@ Plex Toolkit is a Python application designed to help manage Plex movie librarie
 *   **Smart Matching**: Automatically searches your Plex library for matches and handles year disambiguation.
 
 ### 🖼️ Artwork Tools
-*   **Fix Artwork**: Scans your media to apply the official TMDb poster and background.
-    *   **Collection Mode**: Fix artwork for movies within a specific collection.
+*   **Fix Posters & Backgrounds**: Scans your media to apply the official TMDb poster and background.
+    *   **Collection Mode**: Fix posters & backgrounds for movies within a specific collection.
     *   **Library Mode**: Scan and fix the entire movie library.
 *   **Safety Locks**: Respects your manual edits by skipping items where the poster or background fields are locked in Plex.
 
@@ -20,7 +20,7 @@ Plex Toolkit is a Python application designed to help manage Plex movie librarie
 
 *   **Python 3.6+**
 *   **Plex Media Server**: You need the URL and an X-Plex-Token.
-*   **TMDb API Key**: (Optional) Required for dynamic franchise searching and the Artwork Fixer tool.
+*   **TMDb API Key**: (Optional) Required for dynamic franchise searching and the Fix Posters & Backgrounds tool.
 
 ## Installation 🚀
 
@@ -75,7 +75,7 @@ On the first run, the tool will create a `config.json` file. You can configure t
 2.  **Known Franchise**: Select from a list of major film franchises.
 3.  **Studio / Keyword**: Find movies by production company.
 4.  **Settings**: Manage your API keys and connection settings.
-5.  **Tools / Fix Artwork**: Run the artwork fixer on a collection or the whole library.
+5.  **Tools / Fix Posters & Backgrounds**: Run the tool on a collection or the whole library.
 
 ## Disclaimer ⚠️
 
