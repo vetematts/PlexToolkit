@@ -1,66 +1,56 @@
-# Plex Collection Creator 🎬
+# Plex Toolkit
 
-This is a custom Python application that helps users manage and organize their Plex movie libraries by building themed collections. Whether you're a fan of franchises like _Harry Potter_ or studios like _A24_, this tool streamlines the process of grouping titles into collections.
+Plex Toolkit is a Python application designed to help manage Plex movie libraries. It automates the creation of collections based on franchises or studios and includes tools to standardize movie artwork using metadata from The Movie Database (TMDb).
 
-<img width="1020" height="1472" alt="CleanShot 2025-12-28 at 19 58 59@2x" src="https://github.com/user-attachments/assets/75c8cb63-af1e-4580-a923-85216c1d76af" />
+## Features
 
-## 🛠️ Setup
+### Collection Management
+*   **Manual Creation**: Create collections by typing or pasting a list of movie titles.
+*   **Franchises**: Quickly generate collections for popular series (e.g., *Star Wars*, *Harry Potter*, *James Bond*) using TMDb data.
+*   **Studios & Keywords**: Build collections based on production studios (e.g., *A24*, *Pixar*) or cinematic universes.
+*   **Smart Matching**: Automatically searches your Plex library for matches and handles year disambiguation.
 
-1. **Clone the repository.**
-2. **Install dependencies:**
+### Artwork Tools
+*   **Fix Artwork**: Scans your media to apply the official TMDb poster and background.
+    *   **Collection Mode**: Fix artwork for movies within a specific collection.
+    *   **Library Mode**: Scan and fix the entire movie library.
+*   **Safety Locks**: Respects your manual edits by skipping items where the poster or background fields are locked in Plex.
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Prerequisites
 
-3. **Run the app:**
+*   **Python 3.6+**
+*   **Plex Media Server**: You need the URL and an X-Plex-Token.
+*   **TMDb API Key**: (Optional) Required for dynamic franchise searching and the Artwork Fixer tool.
 
-   ```bash
-   python main.py
-   ```
+## Installation
 
-4. **Enter your credentials when prompted.**  
-   You’ll need your Plex Token, Plex URL, and (optionally) a TMDb API key.
+1.  **Clone or Download** the repository.
+2.  **Install Dependencies**:
+    ```bash
+    pip install PlexAPI tmdbv3api colorama requests
+    ```
+3.  **Run the App**:
+    ```bash
+    python main.py
+    ```
 
----
+## Configuration
 
-## 🔐 Credentials Required
+On the first run, the tool will create a `config.json` file. You can configure these settings via the **Settings** menu inside the application.
 
-On first run, you’ll be prompted to enter your Plex Token, Plex URL, and optionally a TMDb API key via the **Configure Credentials** option in the main menu. These credentials are securely saved in a local `config.json` file (excluded from version control).
+*   **Plex Token**: Found in the XML of any media item in Plex Web.
+*   **Plex URL**: The address of your server (e.g., `http://192.168.1.10:32400`).
+*   **TMDb API Key**: Get a free API key from themoviedb.org (required for artwork features).
+*   **Plex Library**: The name of your movie library (default is "Movies").
 
----
+## Usage
 
-### 📎 Finding Your Plex Token & URL
+1.  **Manual Entry**: Type movie names manually.
+2.  **Known Franchise**: Select from a list of major film franchises.
+3.  **Studio / Keyword**: Find movies by production company.
+4.  **Settings**: Manage your API keys and connection settings.
+5.  **Tools / Fix Artwork**: Run the artwork fixer on a collection or the whole library.
 
-- **Plex Token:**
+## Disclaimer
 
-  1. Sign in at [app.plex.tv](https://app.plex.tv)
-  2. Click on any Movie/Show → ⋮ → **Get Info**
-  3. Click **View XML** at the bottom
-  4. In the browser URL, copy the string after `X-Plex-Token=`
-
-- **Plex URL:**
-  1. Open Plex in your browser.
-  2. Go to **Settings** (wrench icon) → **Remote Access**.
-  3. Copy the URL shown under "Remote Access".
-     - Use the **Private URL** if you’re on your home Wi-Fi or LAN.
-     - Use the **Public URL** if you’re outside your network.
-
----
-
-## 📦 Why Use This?
-
-This app is designed for individuals who use Plex as a personal media server to catalog and enjoy their legally acquired digital media — including backups of physical media like DVDs and Blu-rays. It supports better curation, discoverability, and enjoyment of your existing library.
-
----
-
-## ⚙️ Features
-
-- Automatically group movies into collections using TMDb (optional).
-- Manual entry and studio-based collection options.
-- TMDb API key is optional — fallback logic supports limited use without it.
-- Local config management via built-in UI (no need to edit files manually).
-
----
-
-This project was developed as part of a software development assignment and is intended for educational and personal use only.
+This tool is not affiliated with Plex Inc. or The Movie Database. Use at your own risk.
