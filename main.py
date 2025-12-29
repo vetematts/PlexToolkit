@@ -538,13 +538,13 @@ def run_franchise_mode(tmdb, pause_fn):
         print(Fore.RED + f"\n{emojis.CROSS} TMDb API key not provided. Using fallback hardcoded titles.\n")
         franchises_data = load_fallback_data("Franchises")
         print_grid(franchises_data.keys(), columns=3, padding=28, title=Fore.GREEN + "Available Franchises:")
-        choice = pick_from_list_case_insensitive("\n" + Fore.LIGHTBLACK_EX + f"{emojis.REPEAT} Type the franchise name (Esc to cancel): ", franchises_data.keys())
+        choice = pick_from_list_case_insensitive("\n" + Fore.LIGHTBLACK_EX + "Select a franchise by name (Esc to cancel): ", franchises_data.keys())
         if choice is None:
             return None, None
         titles = franchises_data[choice]
     else:
         print_grid(known_collections.keys(), columns=3, padding=28, title=Fore.GREEN + "\nAvailable Collections (TMDb):")
-        choice = pick_from_list_case_insensitive("\n" + Fore.LIGHTBLACK_EX + f"{emojis.REPEAT} Type the collection name (Esc to cancel): ", known_collections.keys())
+        choice = pick_from_list_case_insensitive("\n" + Fore.LIGHTBLACK_EX + "Select a franchise by name (Esc to cancel): ", known_collections.keys())
         if choice is None:
             return None, None
         collection_id = known_collections[choice]
@@ -579,7 +579,7 @@ def run_studio_mode(tmdb, api_key, pause_fn):
         print(Fore.RED + f"\n{emojis.CROSS} TMDb API key not provided. Using fallback hardcoded titles.\n")
         studios_data = load_fallback_data("Studios")
         print_grid(studios_data.keys(), columns=3, padding=24, title=Fore.GREEN + "Available Studios:")
-        choice = pick_from_list_case_insensitive("\n" + Fore.LIGHTBLACK_EX + f"{emojis.REPEAT} Type the studio name (Esc to cancel): ", studios_data.keys())
+        choice = pick_from_list_case_insensitive("\n" + Fore.LIGHTBLACK_EX + "Select a studio by name (Esc to cancel): ", studios_data.keys())
         if choice is None:
             return None, None
         titles = studios_data.get(choice, [])
@@ -591,7 +591,7 @@ def run_studio_mode(tmdb, api_key, pause_fn):
             pretty_names.append(pretty)
             pretty_to_key[pretty.lower()] = key
         print_grid(pretty_names, columns=3, padding=24, title=Fore.GREEN + "\nAvailable Studios:")
-        choice_pretty = pick_from_list_case_insensitive("\n" + Fore.LIGHTBLACK_EX + f"{emojis.REPEAT} Type the studio name (Esc to cancel): ", pretty_names)
+        choice_pretty = pick_from_list_case_insensitive("\n" + Fore.LIGHTBLACK_EX + "Select a studio by name (Esc to cancel): ", pretty_names)
         if choice_pretty is None:
             return None, None
         norm_key = pretty_to_key[choice_pretty.lower()]
