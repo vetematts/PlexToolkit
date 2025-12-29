@@ -28,7 +28,7 @@ Plex Toolkit is a Python application designed to help manage Plex movie librarie
 2.  **Create a Virtual Environment** (Recommended):
     Using a virtual environment keeps dependencies isolated from your system.
     ```bash
-    python -m venv venv
+    python -m venv venv  # Use 'python3' on macOS/Linux
 
     # Windows:
     venv\Scripts\activate
@@ -42,7 +42,7 @@ Plex Toolkit is a Python application designed to help manage Plex movie librarie
     ```
 4.  **Run the App**:
     ```bash
-    python main.py
+    python main.py       # Use 'python3' on macOS/Linux
     ```
 
 ## Configuration ⚙️
