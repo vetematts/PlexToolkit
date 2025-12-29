@@ -396,7 +396,7 @@ def handle_credentials_menu():
         choice = read_menu_choice("Select an option (Esc to go back): ", set("1234567"))
 
         def pause(msg: str = "Press Enter to return to the menu..."):
-            input(msg)
+            read_line(msg)
 
         if choice == "ESC" or choice == "7":
             break
@@ -910,7 +910,7 @@ def run_collection_builder():
     # Returns to main menu with `continue`.
 
     def pause(msg: str = "Press Enter to return to the menu..."):
-        input(msg)
+        read_line(msg)
 
     while True:
         welcome()
