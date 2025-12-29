@@ -395,7 +395,7 @@ def handle_credentials_menu():
         print(Fore.RED + "7." + Fore.RESET + f" {emojis.BACK} Return to main menu\n")
         choice = read_menu_choice("Select an option (Esc to go back): ", set("1234567"))
 
-        def pause(msg: str = "Press Enter to return to the menu..."):
+        def pause(msg: str = "Press Enter or Esc to return to the menu..."):
             read_line(msg)
 
         if choice == "ESC" or choice == "7":
@@ -485,7 +485,7 @@ def handle_credentials_menu():
             print("\nConnection status:")
             print(f"- Plex last tested: {last_plex or 'never'}")
             print(f"- TMDb last tested: {last_tmdb or 'never'}")
-            pause("\nPress Enter to return to the credentials menu...")
+            pause("\nPress Enter or Esc to return to the credentials menu...")
         else:
             print("Invalid choice. Try again.")
             pause()
@@ -909,7 +909,7 @@ def run_collection_builder():
     # Main interactive loop. Stays in a single while-loop and avoids repeating run_collection_builder().
     # Returns to main menu with `continue`.
 
-    def pause(msg: str = "Press Enter to return to the menu..."):
+    def pause(msg: str = "Press Enter or Esc to return to the menu..."):
         read_line(msg)
 
     while True:
