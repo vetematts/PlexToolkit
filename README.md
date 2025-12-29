@@ -60,7 +60,7 @@ On the first run, the tool will create a `config.json` file. You can configure t
 1.  Sign in at [app.plex.tv](https://app.plex.tv).
 2.  Click on any Movie/Show → **⋮** (Three Dots) → **Get Info**.
 3.  Click **View XML** at the bottom.
-4.  In the browser URL, copy the string after `X-Plex-Token=`.
+4.  Look at the URL in your browser's address bar. Copy the token string found after `X-Plex-Token=` (it is usually at the very end of the URL).
 
 **Plex URL:**
 1.  Open Plex in your browser.
