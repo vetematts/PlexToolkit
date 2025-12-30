@@ -37,7 +37,7 @@ WIKIPEDIA_URLS = {
     "DreamWorks Animation": "https://en.wikipedia.org/wiki/List_of_DreamWorks_Animation_productions",
     "Disney Animation": "https://en.wikipedia.org/wiki/List_of_Walt_Disney_Animation_Studios_films",
     "DCEU": "https://en.wikipedia.org/wiki/List_of_DC_Extended_Universe_films",
-    "Illumination": "https://en.wikipedia.org/wiki/List_of_Illumination_films",
+    "Neon": "https://en.wikipedia.org/wiki/List_of_Neon_films",
 }
 
 def is_escape(value: str) -> bool:
@@ -678,6 +678,7 @@ def run_studio_mode(tmdb, config, pause_fn):
         "a24": {"company": 41077}, "pixar": {"company": 3},
         "studio ghibli": {"company": 10342}, "mcu": {"keyword": 180547},
         "dceu": {"keyword": 229266},
+        "neon": {"company": 93920},
     }
     titles = []
 
