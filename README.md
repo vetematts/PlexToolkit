@@ -12,8 +12,9 @@ Plex Toolkit is a Python application designed to help manage Plex movie librarie
 
 ### 🖼️ Artwork Tools
 *   **Fix Posters & Backgrounds**: Scans your media to apply the official TMDb poster and background.
-    *   **Collection Mode**: Fix posters & backgrounds for movies within a specific collection.
-    *   **Library Mode**: Scan and fix the entire movie library.
+    *   **Collection Mode**: Fix posters & backgrounds for items within a specific collection.
+    *   **Library Mode**: Scan and fix the entire library (Movies or TV Shows).
+    *   **TV Support**: Automatically fixes posters for Seasons when processing TV Shows.
 *   **Safety Locks**: Respects your manual edits by skipping items where the poster or background fields are locked in Plex.
 
 ## Prerequisites 📋

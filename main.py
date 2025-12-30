@@ -388,10 +388,29 @@ def handle_credentials_menu():
             test_tmdb_connection(config)
             pause()
         elif choice == "4":
-            current_library = config.get("PLEX_LIBRARY", "Movies")
             if os.name == "nt": os.system("cls")
             else: os.system("clear")
-            new_library = read_line(f"Enter Plex library name (current: {current_library}) (Esc to cancel): ")
+
+            # Try to fetch libraries from Plex to allow selection
+            plex_token = config.get("PLEX_TOKEN")
+            plex_url = config.get("PLEX_URL")
+            available_libs = []
+
+            if plex_token and plex_url:
+                try:
+                    pm = PlexManager(plex_token, plex_url)
+                    libs = pm.get_all_libraries()
+                    available_libs = [l.title for l in libs]
+                except Exception:
+                    pass
+
+            current_library = config.get("PLEX_LIBRARY", "Movies")
+            if available_libs:
+                print_grid(available_libs, columns=2, padding=30, title=Fore.GREEN + "Available Libraries:")
+                new_library = pick_from_list_case_insensitive(f"\nSelect a library (current: {current_library}) (Esc to cancel): ", available_libs)
+            else:
+                new_library = read_line(f"Enter Plex library name (current: {current_library}) (Esc to cancel): ")
+
             if new_library is None:
                 continue
             new_library = new_library.strip()
@@ -809,14 +828,26 @@ def run_poster_tool(config, pause_fn):
     # Connect to Plex
     plex_token = config.get("PLEX_TOKEN")
     plex_url = config.get("PLEX_URL")
-    library_name = config.get("PLEX_LIBRARY", "Movies")
 
     try:
         pm = PlexManager(plex_token, plex_url)
-        library = pm.get_movie_library(library_name)
-        if not library:
+
+        # Select Library
+        print("\nFetching libraries from Plex...")
+        libraries = pm.get_all_libraries()
+        if not libraries:
+            print(Fore.RED + "No libraries found.")
             pause_fn()
             return
+
+        lib_names = [lib.title for lib in libraries]
+        print_grid(lib_names, columns=3, padding=28, title=Fore.GREEN + "Available Libraries:")
+
+        choice_name = pick_from_list_case_insensitive("\n" + Fore.LIGHTBLACK_EX + "Select a library (Esc to cancel): ", lib_names)
+        if not choice_name: return
+
+        library = next(l for l in libraries if l.title == choice_name)
+
     except Exception as e:
         print(Fore.RED + f"Error connecting to Plex: {e}")
         pause_fn()
@@ -850,7 +881,7 @@ def run_poster_tool(config, pause_fn):
             pause_fn()
             return
     elif choice == "2":
-        print("\nFetching all movies from library... this may take a moment.")
+        print("\nFetching all items from library... this may take a moment.")
         items_to_process = library.all()
 
     if items_to_process:

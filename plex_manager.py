@@ -23,6 +23,9 @@ class PlexManager:
             print(f"{emojis.CROSS} Error: Could not find library '{library_name}'")
             return None
 
+    def get_all_libraries(self):
+        return self.plex.library.sections()
+
     def find_movies(self, library, titles):
         matched = []
         for title in titles:
@@ -72,6 +75,10 @@ class PlexManager:
 
     def set_tmdb_poster(self, item, include_locked=False):
         self._set_tmdb_image(item, 'poster', include_locked)
+        # If it's a TV Show, also process the seasons
+        if item.type == 'show':
+            for season in item.seasons():
+                self._set_tmdb_image(season, 'poster', include_locked)
 
     def set_tmdb_art(self, item, include_locked=False):
         self._set_tmdb_image(item, 'background', include_locked)
