@@ -804,6 +804,31 @@ def extract_title_and_year(raw_title):
         int(match.group(2)) if match.group(2) else None,
     )
 
+def normalize_title(title):
+    """
+    Normalizes a title for comparison:
+    - Lowercase
+    - Expands common abbreviations (Dr. -> Drive, St. -> Street)
+    - Removes punctuation
+    - Removes leading 'The', 'A', 'An'
+    - Collapses spaces
+    """
+    if not title:
+        return ""
+    t = title.lower()
+    # Expand abbreviations (word boundary safe)
+    t = re.sub(r"\bdr\.?\b", "drive", t)
+    t = re.sub(r"\bst\.?\b", "street", t)
+    t = re.sub(r"\bvs\.?\b", "versus", t)
+    t = re.sub(r"\bpt\.?\b", "part", t)
+    t = re.sub(r"\bvol\.?\b", "volume", t)
+    # Remove punctuation (keep alphanumeric and spaces)
+    t = re.sub(r"[^\w\s]", "", t)
+    # Remove leading articles
+    t = re.sub(r"^(the|a|an)\s+", "", t)
+    # Collapse spaces
+    return re.sub(r"\s+", " ", t).strip()
+
 class UserAbort(Exception):
     """Custom exception for when the user cancels an operation."""
     pass
@@ -893,76 +918,76 @@ def pick_plex_match(raw_title: str, results):
 
     # Parse the search term
     search_title, search_year = extract_title_and_year(raw_title)
-    search_clean = search_title.lower()
+    search_norm = normalize_title(search_title)
 
     good_matches = []
 
     for item in results:
-        item_title = item.title.lower()
+        item_title = item.title
         item_year = getattr(item, "year", None)
+        item_norm = normalize_title(item_title)
 
-        # 1. Year Check (Critical for accuracy)
-        # If both have years, they MUST match (tolerance +/- 1 year)
+        # 1. Year Check
         years_match = False
         if search_year and item_year:
             if abs(search_year - item_year) <= 1:
                 years_match = True
             else:
-                continue # Explicit year mismatch -> Skip immediately
+                continue # Strict year mismatch
 
-        # 2. Title Similarity
-        ratio = difflib.SequenceMatcher(None, search_clean, item_title).ratio()
+        # 2. Title Matching Logic
+        is_match = False
 
-        # Word boundary substring check (prevents "Tony" matching "Tonya")
-        is_substring = False
-        try:
-            if re.search(r'\b' + re.escape(search_clean) + r'\b', item_title):
-                is_substring = True
-        except Exception:
-            is_substring = search_clean in item_title
+        # A. Exact Normalized Match (High Confidence)
+        if search_norm == item_norm:
+            is_match = True
 
-        # 3. Decision Logic
-        if years_match:
-            # If years match, we can be slightly looser with titles (e.g. "Star Wars" -> "Star Wars: Episode IV")
-            if ratio > 0.5 or is_substring:
-                good_matches.append(item)
-        else:
-            # If NO year context, be extremely strict to avoid false positives
-            # "The Sixth" vs "The Sixth Sense" -> Reject (Ratio ~0.75)
-            # "X" vs "X" -> Accept (Ratio 1.0)
-            if ratio > 0.9 or (ratio > 0.8 and is_substring):
-                 good_matches.append(item)
+        # B. Subtitle Match (Item starts with Search)
+        # e.g. Search: "Precious", Item: "Precious: Based on..."
+        elif item_norm.startswith(search_norm) and (len(item_norm) == len(search_norm) or item_norm[len(search_norm)] == " "):
+             is_match = True
+
+        # C. Long Source Title (Search starts with Item)
+        # e.g. Search: "The French Dispatch of...", Item: "The French Dispatch"
+        elif search_norm.startswith(item_norm) and (len(search_norm) == len(item_norm) or search_norm[len(item_norm)] == " "):
+             is_match = True
+
+        # D. Fuzzy Fallback (only if years match exactly or very close)
+        if not is_match and years_match:
+            ratio = difflib.SequenceMatcher(None, search_norm, item_norm).ratio()
+            # High threshold for fuzzy matches to avoid "Time" vs "No Time to Die"
+            if ratio > 0.85:
+                is_match = True
+
+        if is_match:
+            good_matches.append(item)
 
     if not good_matches:
         return None
 
     # Sort matches by title similarity so exact matches appear at the top
-    good_matches.sort(key=lambda x: difflib.SequenceMatcher(None, search_clean, x.title.lower()).ratio(), reverse=True)
+    good_matches.sort(key=lambda x: difflib.SequenceMatcher(None, search_norm, normalize_title(x.title)).ratio(), reverse=True)
 
-    # Auto-select "perfect" matches to reduce manual entry
-    for match in good_matches:
-        m_title = match.title.lower()
-        # 1. Exact match (e.g. "Men" == "Men")
-        if m_title == search_clean:
-            return match
-        # 2. Subtitle match (e.g. "Pearl" in "Pearl: An X-traordinary...")
-        if m_title.startswith(search_clean + ":") or m_title.startswith(search_clean + " -"):
-            return match
-        # 3. Filename/Junk match (e.g. "Aftersun" in "Aftersun.2022...")
-        # Must start with title followed by non-alphanumeric (space, dot, paren, etc)
-        # This handles cases where Plex is using the raw filename as the title
-        if re.match(re.escape(search_clean) + r"[^a-z0-9]", m_title):
-            return match
+    # Auto-select perfect matches
+    if len(good_matches) > 0:
+        best = good_matches[0]
+        best_norm = normalize_title(best.title)
+
+        # If we have a normalized exact match, take it.
+        if best_norm == search_norm:
+            return best
+
+        # If we have a clear subtitle match (and it's the only good one, or significantly better)
+        if best_norm.startswith(search_norm) and len(good_matches) == 1:
+            return best
+
+        # If we have a clear reverse subtitle match (French Dispatch)
+        if search_norm.startswith(best_norm) and len(good_matches) == 1:
+            return best
 
     if len(good_matches) == 1:
-        match = good_matches[0]
-        # If it's a perfect match, auto-accept
-        match_title = match.title.lower()
-        if search_clean == match_title or difflib.SequenceMatcher(None, search_clean, match_title).ratio() > 0.9:
-            return match
-
-        # Otherwise, ask for confirmation (Safety check for "The Witch" -> "The Love Witch")
-        print(f"\nFound 1 match for '{raw_title}':")
+        # If we only found one candidate that passed our strict filters, accept it.
+        return good_matches[0]
     else:
         print(f"\nMultiple Plex matches for '{raw_title}':")
 
