@@ -6,7 +6,7 @@ Plex Toolkit is a Python application designed to help manage Plex movie librarie
 
 ### 🎬 Collection Management
 *   **Manual Creation**: Create collections by typing or pasting a list of movie titles.
-*   **Franchises**: Quickly generate collections for popular series (e.g., *Star Wars*, *Harry Potter*, *James Bond*) using TMDb data.
+*   **Franchises**: Quickly generate collections for popular series (e.g., *Star Wars*, *Harry Potter*, *James Bond*) using TMDb data (or built-in fallback lists if no API key is provided).
 *   **Studios & Collections**:
     *   **Local Search**: Scans your library to find top studios (e.g. "A24 (45 movies)").
     *   **Web Import**: Scrapes Wikipedia/Criterion for accurate lists (e.g. *Academy Award Winners*, *Criterion Collection*).
@@ -80,6 +80,18 @@ On the first run, the tool will create a `config.json` file. You can configure t
 3.  **Studio / Collections**: Find movies by studio, import from Wikipedia, or discover via TMDb.
 4.  **Settings**: Manage your API keys and connection settings.
 5.  **Tools / Fix Posters & Backgrounds**: Run the tool on a collection or the whole library.
+
+## Troubleshooting & Tips 💡
+
+*   **Emojis not showing?**
+    This tool uses emojis for a better UI. If you see squares or weird characters, try using a modern terminal like **Windows Terminal**, **VS Code Integrated Terminal**, or **iTerm2**.
+*   **Plex Connection Failed?**
+    *   Ensure your **Plex URL** includes the protocol and port (e.g., `http://192.168.1.5:32400`).
+    *   Check that your **Plex Token** is correct and hasn't expired.
+*   **No TMDb Key?**
+    The tool works without a TMDb API key, but functionality is limited:
+    *   **Franchise/Studio Mode**: Uses a built-in "fallback" list of popular collections instead of searching the live database.
+    *   **Poster Tool**: Will not work (requires TMDb to fetch images).
 
 ## Disclaimer ⚠️
 
