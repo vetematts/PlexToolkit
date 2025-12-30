@@ -25,4 +25,13 @@ class TMDbSearch:
     def get_movies_from_collection(self, collection_id):
         collection = Collection()
         result = collection.details(collection_id)
-        return [movie["title"] for movie in result.get("parts", [])]
+        movies = []
+        for movie in result.get("parts", []):
+            title = movie.get("title")
+            date = movie.get("release_date")
+            if title:
+                if date and len(date) >= 4:
+                    movies.append(f"{title} ({date[:4]})")
+                else:
+                    movies.append(title)
+        return movies

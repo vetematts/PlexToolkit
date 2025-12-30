@@ -3,3 +3,4 @@ tmdbv3api
 colorama
 requests
 emojis
+beautifulsoup4
