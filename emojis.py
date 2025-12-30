@@ -16,3 +16,4 @@ CLAPPER = "\U0001f3ac"  # 🎬
 BOOK = "\U0001f4d4"  # 📔
 BACK = "\U0001f519"  # 🔙
 WAVE = "\U0001f44b"  # 👋
+ART = "\U0001f5bc\ufe0f"  # 🖼️

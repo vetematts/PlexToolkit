@@ -309,21 +309,21 @@ def handle_main_menu() -> str:
         Fore.GREEN
         + "2."
         + Fore.RESET
-        + f" {emojis.FRANCHISE}  Known Franchise (e.g. Star Wars, Harry Potter)\n"
+        + f" {emojis.FRANCHISE}  Franchise / Series (e.g. Star Wars, Harry Potter)\n"
     )
     print(
         Fore.GREEN
         + "3."
         + Fore.RESET
-        + f" {emojis.STUDIO}  Studio / Keyword (e.g. A24, Pixar)\n"
+        + f" {emojis.STUDIO}  Studio / Collections (e.g. A24, Pixar)\n"
     )
     print(
         Fore.YELLOW
         + "4."
         + Fore.RESET
-        + f" {emojis.SETTINGS}  Settings & Credentials\n"
+        + f" {emojis.ART}  Fix Posters & Backgrounds\n"
     )
-    print(Fore.YELLOW + "5." + Fore.RESET + f" {emojis.CONFIGURE} Tools / Fix Posters & Backgrounds\n")
+    print(Fore.YELLOW + "5." + Fore.RESET + f" {emojis.CONFIGURE} Settings & Credentials\n")
     print(Fore.RED + "6." + Fore.RESET + f" {emojis.EXIT} Exit\n")
     print(
         Fore.LIGHTBLACK_EX
@@ -499,7 +499,7 @@ def run_franchise_mode(tmdb, pause_fn):
     """Handles the franchise/series mode. Returns (collection_name, titles) or (None, None)."""
     if os.name == "nt": os.system("cls")
     else: os.system("clear")
-    print(PLEX_YELLOW + f"{emojis.FRANCHISE}  Known Franchise Mode")
+    print(PLEX_YELLOW + f"{emojis.FRANCHISE}  Franchise / Series Mode")
     known_collections = {
         "Alien": 8091, "Back to the Future": 264, "Despicable Me": 86066,
         "Evil Dead": 1960, "Fast & Furious": 9485, "Harry Potter": 1241,
@@ -651,7 +651,7 @@ def run_studio_mode(tmdb, config, pause_fn):
     """
     if os.name == "nt": os.system("cls")
     else: os.system("clear")
-    print(PLEX_YELLOW + f"{emojis.STUDIO}  Studio / Keyword Mode")
+    print(PLEX_YELLOW + f"{emojis.STUDIO}  Studio / Collection Mode")
 
     print(Fore.GREEN + "1." + Fore.RESET + " Search Local Plex Library (Uses Plex API to find existing movies)")
     print(Fore.GREEN + "2." + Fore.RESET + " Discover via TMDb API (Standard search, may miss regional distribution titles)")
@@ -667,11 +667,6 @@ def run_studio_mode(tmdb, config, pause_fn):
 
     if mode == "1":
         # Plex Native Search
-        studio_query = read_line("\nEnter Studio Name (e.g. 'A24', 'Pixar') (Esc to cancel): ")
-        if not studio_query: return None, None, False
-        studio_query = studio_query.strip()  # Remove leading/trailing whitespace
-
-        # We need to connect to Plex here to perform the search
         plex_token = config.get("PLEX_TOKEN")
         plex_url = config.get("PLEX_URL")
         library_name = config.get("PLEX_LIBRARY", "Movies")
@@ -681,8 +676,31 @@ def run_studio_mode(tmdb, config, pause_fn):
             library = pm.get_movie_library(library_name)
             if not library: return None, None, False
 
-            print(f"\nSearching Plex library for studio '{studio_query}' (scanning all items)...")
-            items = pm.get_items_by_studio(library, studio_query)
+            print(f"\n{emojis.INFO} Scanning Plex library for studios... (this may take a moment)")
+            all_items = library.all()
+
+            studio_counts = {}
+            for item in all_items:
+                if getattr(item, 'studio', None):
+                    s = item.studio.strip()
+                    if s:
+                        studio_counts[s] = studio_counts.get(s, 0) + 1
+
+            if studio_counts:
+                sorted_studios = sorted(studio_counts.items(), key=lambda x: x[1], reverse=True)
+                top_studios = [f"{s[0]} ({s[1]})" for s in sorted_studios[:45]]
+                print(f"\n{Fore.GREEN}Top Studios in your Library:{Fore.RESET}")
+                print_grid(top_studios, columns=3, padding=30, sort=False)
+                print(f"{Fore.LIGHTBLACK_EX}(Found {len(studio_counts)} unique studios)")
+
+            studio_query = read_line(f"\nEnter Studio Name (partial match allowed) (Esc to cancel): ")
+            if not studio_query: return None, None, False
+            studio_query = studio_query.strip()
+
+            print(f"\nFiltering movies for studio '{studio_query}'...")
+            query = studio_query.lower()
+            items = [item for item in all_items if getattr(item, 'studio', None) and query in item.studio.lower()]
+
             return studio_query, items, True # True = these are objects, not titles
         except Exception as e:
             print(Fore.RED + f"Error searching Plex: {e}")
@@ -1119,8 +1137,8 @@ def run_poster_tool(config, pause_fn):
     if os.name == "nt": os.system("cls")
     else: os.system("clear")
 
-    print(PLEX_YELLOW + f"{emojis.CONFIGURE} TOOLS: Fix Posters & Backgrounds (TMDb)")
-    print("This tool scans movies and selects the TMDb poster and background if available.\n")
+    print(PLEX_YELLOW + f"{emojis.ART}  Fix Posters & Backgrounds")
+    print("This tool uses the Plex API to automatically select TMDb-sourced artwork for your items.\n")
 
     print(Fore.YELLOW + "1." + Fore.RESET + " Fix Posters & Backgrounds for a specific Collection")
     print(Fore.YELLOW + "2." + Fore.RESET + " Fix Posters & Backgrounds for the ENTIRE Library (Slow)")
@@ -1223,15 +1241,15 @@ def run_collection_builder():
             print(f"{emojis.WAVE} Goodbye!")
             return
 
-        # Credentials settings
-        if mode == "4":
-            handle_credentials_menu()
-            continue  # back to main loop
-
         # Tools
-        if mode == "5":
+        if mode == "4":
             run_poster_tool(config, pause)
             continue
+
+        # Credentials settings
+        if mode == "5":
+            handle_credentials_menu()
+            continue  # back to main loop
 
         # Collection Creation (modes 1-3)
         titles = []
@@ -1274,12 +1292,12 @@ def load_fallback_data(section):
     return data.get(section, {})
 
 
-def print_grid(names, columns=3, padding=28, title=None, title_emoji=None):
+def print_grid(names, columns=3, padding=28, title=None, title_emoji=None, sort=True):
     # Prints the list of titles in columns for readability
     if title:
         print((title_emoji or "") + " " + title)
-    sorted_names = sorted(names)
-    rows = [sorted_names[i : i + columns] for i in range(0, len(sorted_names), columns)]
+    items = sorted(names) if sort else names
+    rows = [items[i : i + columns] for i in range(0, len(items), columns)]
     for row in rows:
         print("".join(name.ljust(padding) for name in row))
 
