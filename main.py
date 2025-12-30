@@ -34,6 +34,10 @@ WIKIPEDIA_URLS = {
     "Pixar": "https://en.wikipedia.org/wiki/List_of_Pixar_films",
     "Studio Ghibli": "https://en.wikipedia.org/wiki/List_of_Studio_Ghibli_works",
     "MCU": "https://en.wikipedia.org/wiki/List_of_Marvel_Cinematic_Universe_films",
+    "DreamWorks Animation": "https://en.wikipedia.org/wiki/List_of_DreamWorks_Animation_productions",
+    "Disney Animation": "https://en.wikipedia.org/wiki/List_of_Walt_Disney_Animation_Studios_films",
+    "DCEU": "https://en.wikipedia.org/wiki/List_of_DC_Extended_Universe_films",
+    "Illumination": "https://en.wikipedia.org/wiki/List_of_Illumination_films",
 }
 
 def is_escape(value: str) -> bool:
