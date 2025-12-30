@@ -7,7 +7,10 @@ Plex Toolkit is a Python application designed to help manage Plex movie librarie
 ### 🎬 Collection Management
 *   **Manual Creation**: Create collections by typing or pasting a list of movie titles.
 *   **Franchises**: Quickly generate collections for popular series (e.g., *Star Wars*, *Harry Potter*, *James Bond*) using TMDb data.
-*   **Studios & Keywords**: Build collections based on production studios (e.g., *A24*, *Pixar*) or cinematic universes.
+*   **Studios & Collections**:
+    *   **Local Search**: Scans your library to find top studios (e.g. "A24 (45 movies)").
+    *   **Web Import**: Scrapes Wikipedia/Criterion for accurate lists (e.g. *Academy Award Winners*, *Criterion Collection*).
+    *   **TMDb Discovery**: Finds movies by production company.
 *   **Smart Matching**: Automatically searches your Plex library for matches and handles year disambiguation.
 
 ### 🖼️ Artwork Tools
@@ -74,7 +77,7 @@ On the first run, the tool will create a `config.json` file. You can configure t
 
 1.  **Manual Entry**: Type movie names manually.
 2.  **Known Franchise**: Select from a list of major film franchises.
-3.  **Studio / Keyword**: Find movies by production company.
+3.  **Studio / Collections**: Find movies by studio, import from Wikipedia, or discover via TMDb.
 4.  **Settings**: Manage your API keys and connection settings.
 5.  **Tools / Fix Posters & Backgrounds**: Run the tool on a collection or the whole library.
 
