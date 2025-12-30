@@ -12,10 +12,10 @@ import contextlib
 from datetime import datetime, timezone
 from typing import Optional
 import difflib
+import requests
 
 # Try to import scraping libraries
 try:
-    import requests
     from bs4 import BeautifulSoup
     BS4_AVAILABLE = True
 except ImportError:
@@ -635,6 +635,7 @@ def run_studio_mode(tmdb, config, pause_fn):
         # Plex Native Search
         studio_query = read_line("\nEnter Studio Name (e.g. 'A24', 'Pixar') (Esc to cancel): ")
         if not studio_query: return None, None, False
+        studio_query = studio_query.strip()  # Remove leading/trailing whitespace
 
         # We need to connect to Plex here to perform the search
         plex_token = config.get("PLEX_TOKEN")
@@ -1042,8 +1043,12 @@ def process_and_create_collection(collection_name, items, config, pause_fn, is_p
         pause_fn()
         return
 
-    library.createCollection(collection_name, items=found_movies)
-    print(f"\n{emojis.CHECK} Created collection '{collection_name}' with {len(found_movies)} movies.")
+    try:
+        library.createCollection(collection_name, items=found_movies)
+        print(f"\n{emojis.CHECK} Created collection '{collection_name}' with {len(found_movies)} movies.")
+    except Exception as e:
+        print(Fore.RED + f"\n{emojis.CROSS} Failed to create collection in Plex: {e}")
+
     pause_fn()
 
 def run_poster_tool(config, pause_fn):
