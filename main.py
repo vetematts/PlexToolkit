@@ -31,6 +31,7 @@ CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
 
 WIKIPEDIA_URLS = {
     "A24": "https://en.wikipedia.org/wiki/List_of_A24_films",
+    "Academy Award Best Picture Winners": "https://en.wikipedia.org/wiki/Academy_Award_for_Best_Picture",
     "Cannes Palme d'Or Winners": "https://en.wikipedia.org/wiki/Palme_d%27Or",
     "Pixar": "https://en.wikipedia.org/wiki/List_of_Pixar_films",
     "Studio Ghibli": "https://en.wikipedia.org/wiki/List_of_Studio_Ghibli_works",
@@ -39,6 +40,7 @@ WIKIPEDIA_URLS = {
     "Disney Animation": "https://en.wikipedia.org/wiki/List_of_Walt_Disney_Animation_Studios_films",
     "DreamWorks Animation": "https://en.wikipedia.org/wiki/List_of_DreamWorks_Animation_productions",
     "Neon": "https://en.wikipedia.org/wiki/List_of_Neon_films",
+    "The Criterion Collection": "https://www.criterion.com/shop/browse/list?sort=spine_number",
 }
 
 def is_escape(value: str) -> bool:
@@ -545,7 +547,7 @@ def scrape_wikipedia_film_list(url: str) -> list[str]:
     Scrapes a Wikipedia 'List of X films' page for titles and years.
     Returns a list of strings in the format 'Title (Year)'.
     """
-    print(f"\n{emojis.world_map if hasattr(emojis, 'world_map') else ''} Fetching data from Wikipedia...")
+    print(f"\n{emojis.world_map if hasattr(emojis, 'world_map') else ''} Fetching data from web source...")
     try:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
         response = requests.get(url, headers=headers, timeout=10)
@@ -556,6 +558,22 @@ def scrape_wikipedia_film_list(url: str) -> list[str]:
 
     soup = BeautifulSoup(response.text, "html.parser")
     titles = []
+
+    # Special handling for Criterion.com official list
+    if "criterion.com" in url:
+        print("Parsing Criterion.com official list...")
+        rows = soup.find_all("tr")
+        for row in rows:
+            title_cell = row.find("td", class_="g-title")
+            year_cell = row.find("td", class_="g-year")
+            if title_cell and year_cell:
+                t = title_cell.get_text(strip=True)
+                y = year_cell.get_text(strip=True)
+                if t and y and y.isdigit():
+                    titles.append(f"{t} ({y})")
+        unique_titles = sorted(list(set(titles)))
+        print(Fore.GREEN + f"{emojis.CHECK} Found {len(unique_titles)} unique movies from Criterion.com.")
+        return unique_titles
 
     # Find all tables with class 'wikitable' (standard for film lists)
     tables = soup.find_all("table", {"class": "wikitable"})
@@ -623,9 +641,9 @@ def run_studio_mode(tmdb, config, pause_fn):
     print(Fore.GREEN + "1." + Fore.RESET + " Search Local Plex Library (Uses Plex API to find existing movies)")
     print(Fore.GREEN + "2." + Fore.RESET + " Discover via TMDb API (Standard search, may miss regional distribution titles)")
     if BS4_AVAILABLE:
-        print(Fore.GREEN + "3." + Fore.RESET + " Import from Wikipedia Filmography (Best for complete lists like A24)")
+        print(Fore.GREEN + "3." + Fore.RESET + " Import from Web List (Wikipedia/Official) (Best for complete lists like A24)")
     else:
-        print(Fore.LIGHTBLACK_EX + "3. Import from Wikipedia Filmography (Install 'beautifulsoup4' to enable)")
+        print(Fore.LIGHTBLACK_EX + "3. Import from Web List (Install 'beautifulsoup4' to enable)")
 
     valid_choices = set("123") if BS4_AVAILABLE else set("12")
     mode = read_menu_choice("\nSelect a method (Esc to cancel): ", valid_choices)
@@ -658,7 +676,7 @@ def run_studio_mode(tmdb, config, pause_fn):
 
     if mode == "3":
         # Wikipedia Scraping
-        print_grid(WIKIPEDIA_URLS.keys(), columns=2, padding=24, title=Fore.GREEN + "\nSupported Studios:")
+        print_grid(WIKIPEDIA_URLS.keys(), columns=2, padding=40, title=Fore.GREEN + "\nSupported Studios:")
         choice = pick_from_list_case_insensitive("\n" + Fore.LIGHTBLACK_EX + "Select a studio (Esc to cancel): ", WIKIPEDIA_URLS.keys())
         if choice is None:
             return None, None, False
@@ -683,9 +701,11 @@ def run_studio_mode(tmdb, config, pause_fn):
         "neon": {"company": 93920},
         "dreamworks animation": {"company": 521}, "illumination": {"company": 6704},
         "cannes palme d'or winners": {"keyword": 239707},
+        "academy award best picture winners": {"keyword": 208364},
         "focus features": {"company": 10146}, "searchlight pictures": {"company": 43},
         "blue sky studios": {"company": 9383}, "laika": {"company": 23008},
         "sony pictures animation": {"company": 2251}, "disney animation": {"company": 2},
+        "the criterion collection": {"company": 10994},
     }
     titles = []
 
