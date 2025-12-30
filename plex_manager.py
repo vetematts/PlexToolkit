@@ -26,6 +26,13 @@ class PlexManager:
     def get_all_libraries(self):
         return self.plex.library.sections()
 
+    def get_items_by_studio(self, library, studio_name):
+        # Fetch all items and filter locally for better partial matching
+        # This catches "A24", "A24 Films", "A24 Productions", etc.
+        all_items = library.all()
+        query = studio_name.lower()
+        return [item for item in all_items if item.studio and query in item.studio.lower()]
+
     def find_movies(self, library, titles):
         matched = []
         for title in titles:
