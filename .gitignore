@@ -1,5 +1,6 @@
-config.json
-.DS_Store
-__pycache__/
 .venv/
-venv/
+__pycache__/
+*.pyc
+config.json
+.env
+.DS_Store

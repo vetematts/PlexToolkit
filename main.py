@@ -825,14 +825,28 @@ def run_poster_tool(config, pause_fn):
     items_to_process = []
 
     if choice == "1":
-        col_name = read_line("Enter the exact Collection Name: ")
+        print("\nFetching collections from Plex... (this may take a moment)")
+        collections = library.collections()
+
+        if not collections:
+            print(Fore.YELLOW + "No collections found in this library.")
+            pause_fn()
+            return
+
+        col_names = [c.title for c in collections]
+        print_grid(col_names, columns=3, padding=28, title=Fore.GREEN + "Available Collections:")
+
+        col_name = pick_from_list_case_insensitive("\n" + Fore.LIGHTBLACK_EX + "Select a collection by name (Esc to cancel): ", col_names)
         if not col_name: return
+
         try:
-            # Get specific collection
-            items_to_process = library.collections(title=col_name)[0].items()
-            print(f"\nFound {len(items_to_process)} movies in collection '{col_name}'.")
-        except IndexError:
-            print(Fore.RED + f"\nCollection '{col_name}' not found.")
+            # Find the collection object matching the selected name
+            target_col = next((c for c in collections if c.title == col_name), None)
+            if target_col:
+                items_to_process = target_col.items()
+                print(f"\nFound {len(items_to_process)} movies in collection '{target_col.title}'.")
+        except Exception as e:
+            print(Fore.RED + f"\nError accessing collection: {e}")
             pause_fn()
             return
     elif choice == "2":
@@ -948,9 +962,12 @@ def pick_from_list_case_insensitive(prompt, choices, back_allowed=True):
         # Fuzzy match suggestion
         matches = difflib.get_close_matches(choice, choices, n=1, cutoff=0.6)
         if matches:
-            print(f"Unknown option. Did you mean '{matches[0]}'?")
-        else:
-            print("Unknown option. Please type one of the listed items, or Esc to cancel.")
+            suggestion = matches[0]
+            confirm = read_line(f"Did you mean '{suggestion}'? (y/n): ", allow_escape=True)
+            if confirm and confirm.lower() == 'y':
+                return suggestion
+
+        print("Unknown option. Please type one of the listed items, or Esc to cancel.")
 
 
 def print_list(items, columns=3, padding=28):
