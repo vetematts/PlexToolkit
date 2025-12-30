@@ -30,10 +30,10 @@ from styling import print_plex_logo_ascii, PLEX_YELLOW
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
 
 WIKIPEDIA_URLS = {
-    "a24": "https://en.wikipedia.org/wiki/List_of_A24_films",
-    "pixar": "https://en.wikipedia.org/wiki/List_of_Pixar_films",
-    "studio ghibli": "https://en.wikipedia.org/wiki/List_of_Studio_Ghibli_works",
-    "mcu": "https://en.wikipedia.org/wiki/List_of_Marvel_Cinematic_Universe_films",
+    "A24": "https://en.wikipedia.org/wiki/List_of_A24_films",
+    "Pixar": "https://en.wikipedia.org/wiki/List_of_Pixar_films",
+    "Studio Ghibli": "https://en.wikipedia.org/wiki/List_of_Studio_Ghibli_works",
+    "MCU": "https://en.wikipedia.org/wiki/List_of_Marvel_Cinematic_Universe_films",
 }
 
 def is_escape(value: str) -> bool:
@@ -664,9 +664,9 @@ def run_studio_mode(tmdb, config, pause_fn):
             pause_fn()
             return None, None, False
 
-        collection_name = read_line(f"Enter a name for your new collection (Default: {choice.title()}): ")
+        collection_name = read_line(f"Enter a name for your new collection (Default: {choice}): ")
         if collection_name is None: return None, None, False
-        if not collection_name.strip(): collection_name = choice.title()
+        if not collection_name.strip(): collection_name = choice
 
         return collection_name.strip(), titles, False
 
