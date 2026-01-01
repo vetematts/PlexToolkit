@@ -2,8 +2,6 @@
 
 Plex Toolkit is a Python application designed to help manage Plex movie libraries. It automates the creation of collections based on franchises or studios and includes tools to standardise movie artwork using metadata from The Movie Database (TMDb).
 
-<img width="1492" height="1463" alt="CleanShot 2025-12-31 at 01 06 08@2x" src="https://github.com/user-attachments/assets/a920920a-83c0-4e87-8958-ca6e86680aa0" />
-
 ## Features ✨
 
 ### 🎬 Collection Management
