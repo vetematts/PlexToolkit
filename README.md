@@ -93,6 +93,14 @@ On the first run, the tool will create a `config.json` file. You can configure t
     *   **Franchise/Studio Mode**: Uses a built-in "fallback" list of popular collections instead of searching the live database.
     *   **Poster Tool**: Will not work (requires TMDb to fetch images).
 
+## Development 🛠️
+
+If you wish to modify the code, the following tools are included to ensure quality:
+
+*   **Formatting**: Run `black .` to auto-format code.
+*   **Linting**: Run `ruff check .` to catch style issues and bugs.
+*   **Testing**: Run `pytest` to execute unit tests.
+
 ## Disclaimer ⚠️
 
 This tool is not affiliated with Plex Inc. or The Movie Database. Use at your own risk.
