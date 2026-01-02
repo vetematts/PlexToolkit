@@ -14,7 +14,7 @@ import requests
 
 # Try to import scraping libraries
 try:
-    from bs4 import BeautifulSoup
+    from bs4 import BeautifulSou5p
     BS4_AVAILABLE = True
 except ImportError:
     BS4_AVAILABLE = False
@@ -24,6 +24,8 @@ import emojis
 from plex_manager import PlexManager
 from tmdb_search import TMDbSearch
 from styling import print_plex_logo_ascii, PLEX_YELLOW
+import constants
+import scraper
 from utils import (
     read_line,
     read_menu_choice,
@@ -37,20 +39,6 @@ from utils import (
     UserAbort,
     is_escape
 )
-
-WIKIPEDIA_URLS = {
-    "A24": "https://en.wikipedia.org/wiki/List_of_A24_films",
-    "Academy Award Best Picture Winners": "https://en.wikipedia.org/wiki/Academy_Award_for_Best_Picture",
-    "Cannes Palme d'Or Winners": "https://en.wikipedia.org/wiki/Palme_d%27Or",
-    "Pixar": "https://en.wikipedia.org/wiki/List_of_Pixar_films",
-    "Studio Ghibli": "https://en.wikipedia.org/wiki/List_of_Studio_Ghibli_works",
-    "MCU": "https://en.wikipedia.org/wiki/List_of_Marvel_Cinematic_Universe_films",
-    "DCEU": "https://en.wikipedia.org/wiki/List_of_DC_Extended_Universe_films",
-    "Disney Animation": "https://en.wikipedia.org/wiki/List_of_Walt_Disney_Animation_Studios_films",
-    "DreamWorks Animation": "https://en.wikipedia.org/wiki/List_of_DreamWorks_Animation_productions",
-    "Neon": "https://en.wikipedia.org/wiki/List_of_Neon_films",
-    "The Criterion Collection": "https://www.criterion.com/shop/browse/list?sort=spine_number",
-}
 
 
 def _now_iso():
@@ -129,13 +117,17 @@ TMDB_API_KEY = config.get("TMDB_API_KEY")
 MOCK_MODE = False  # Set to True to simulate Plex actions without making changes
 
 
+def clear_screen():
+    """Clears the terminal screen in a cross-platform way."""
+    if os.name == "nt":
+        os.system("cls")
+    else:
+        os.system("clear")
+
+
 def welcome():
     """Display welcome message and Plex logo, clearing the screen first."""
-    # Clear terminal screen for cleanliness in a cross-platform way.
-    if os.name == "nt":  # For Windows
-        os.system("cls")
-    else:  # For macOS and Linux
-        os.system("clear")
+    clear_screen()
     print_plex_logo_ascii()
     print(PLEX_YELLOW + f"\n{emojis.MOVIE} Welcome to the Plex Toolkit!\n")
 
@@ -195,11 +187,7 @@ def handle_main_menu() -> str:
 def handle_credentials_menu():
     """Displays and manages the credentials configuration submenu."""
     while True:
-        # Clear terminal screen for cleanliness in a cross-platform way.
-        if os.name == "nt":  # For Windows
-            os.system("cls")
-        else:  # For macOS and Linux
-            os.system("clear")
+        clear_screen()
         print(PLEX_YELLOW + f"{emojis.CONFIGURE} CONFIGURE CREDENTIALS")
         print(Fore.YELLOW + "1." + Fore.RESET + f" {emojis.KEY} Set Plex Token\n")
         print(Fore.YELLOW + "2." + Fore.RESET + f" {emojis.URL} Set Plex URL\n")
@@ -216,8 +204,7 @@ def handle_credentials_menu():
         if choice == "ESC" or choice == "7":
             break
         if choice == "1":
-            if os.name == "nt": os.system("cls")
-            else: os.system("clear")
+            clear_screen()
             new_token = read_line("Enter new Plex Token (Esc to cancel): ")
             if new_token is None:
                 continue
@@ -232,8 +219,7 @@ def handle_credentials_menu():
             test_plex_connection(config)
             pause()
         elif choice == "2":
-            if os.name == "nt": os.system("cls")
-            else: os.system("clear")
+            clear_screen()
             new_url = read_line("Enter new Plex URL (Esc to cancel): ")
             if new_url is None:
                 continue
@@ -256,8 +242,7 @@ def handle_credentials_menu():
             test_plex_connection(config)
             pause()
         elif choice == "3":
-            if os.name == "nt": os.system("cls")
-            else: os.system("clear")
+            clear_screen()
             new_key = read_line("Enter new TMDb API Key (Esc to cancel): ")
             if new_key is None:
                 continue
@@ -267,8 +252,7 @@ def handle_credentials_menu():
             test_tmdb_connection(config)
             pause()
         elif choice == "4":
-            if os.name == "nt": os.system("cls")
-            else: os.system("clear")
+            clear_screen()
 
             # Try to fetch libraries from Plex to allow selection
             plex_token = config.get("PLEX_TOKEN")
@@ -308,10 +292,7 @@ def handle_credentials_menu():
             test_tmdb_connection(config)
             pause()
         elif choice == "6":
-            if os.name == "nt":
-                os.system("cls")
-            else:
-                os.system("clear")
+            clear_screen()
             print(Fore.CYAN + f"{emojis.BOOK} Current Configuration:\n")
             print(json.dumps(config, indent=4))
             last_plex = config.get("PLEX_LAST_TESTED", "")
@@ -327,8 +308,7 @@ def handle_credentials_menu():
 
 def run_manual_mode(pause_fn):
     """Handles the manual movie entry mode. Returns (collection_name, titles) or (None, None)."""
-    if os.name == "nt": os.system("cls")
-    else: os.system("clear")
+    clear_screen()
     print(PLEX_YELLOW + f"{emojis.MANUAL} Manual Entry\n")
     collection_name = read_line(
         Fore.LIGHTBLACK_EX + "Enter a name for your new collection (Esc to cancel): " + Fore.RESET
@@ -354,20 +334,8 @@ def run_manual_mode(pause_fn):
 
 def run_franchise_mode(tmdb, pause_fn):
     """Handles the franchise/series mode. Returns (collection_name, titles) or (None, None)."""
-    if os.name == "nt": os.system("cls")
-    else: os.system("clear")
+    clear_screen()
     print(PLEX_YELLOW + f"{emojis.FRANCHISE}  Franchise / Series Mode")
-    known_collections = {
-        "Alien": 8091, "Back to the Future": 264, "Despicable Me": 86066,
-        "Evil Dead": 1960, "Fast & Furious": 9485, "Harry Potter": 1241,
-        "The Hunger Games": 131635, "Indiana Jones": 84, "James Bond": 645,
-        "John Wick": 404609, "Jurassic Park": 328, "The Lord of the Rings": 119,
-        "The Matrix": 2344, "Mission: Impossible": 87359, "Ocean's": 304,
-        "Pirates of the Caribbean": 295, "Planet of the Apes": 173710,
-        "Scream": 2602, "Shrek": 2150, "Sonic the Hedgehog": 720879,
-        "Star Trek": 115575, "Star Wars": 10, "The Dark Knight": 263,
-        "The Twilight Saga": 33514,
-    }
     titles = []
 
     if not tmdb:
@@ -379,11 +347,11 @@ def run_franchise_mode(tmdb, pause_fn):
             return None, None
         titles = franchises_data[choice]
     else:
-        print_grid(known_collections.keys(), columns=3, padding=28, title=Fore.GREEN + "\nAvailable Collections (TMDb):")
-        choice = pick_from_list_case_insensitive("\n" + Fore.LIGHTBLACK_EX + "Select a franchise by name (Esc to cancel): ", known_collections.keys())
+        print_grid(constants.KNOWN_FRANCHISES.keys(), columns=3, padding=28, title=Fore.GREEN + "\nAvailable Collections (TMDb):")
+        choice = pick_from_list_case_insensitive("\n" + Fore.LIGHTBLACK_EX + "Select a franchise by name (Esc to cancel): ", constants.KNOWN_FRANCHISES.keys())
         if choice is None:
             return None, None
-        collection_id = known_collections[choice]
+        collection_id = constants.KNOWN_FRANCHISES[choice]
         try:
             titles = tmdb.get_movies_from_collection(collection_id)
         except Exception as e:
@@ -399,106 +367,6 @@ def run_franchise_mode(tmdb, pause_fn):
     return collection_name.strip(), titles
 
 
-def scrape_wikipedia_film_list(url: str) -> list[str]:
-    """
-    Scrapes a Wikipedia 'List of X films' page for titles and years.
-    Returns a list of strings in the format 'Title (Year)'.
-    """
-    print(f"\n{emojis.world_map if hasattr(emojis, 'world_map') else ''} Fetching data from web source...")
-    try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-    except Exception as e:
-        print(Fore.RED + f"{emojis.CROSS} Error fetching Wikipedia page: {e}")
-        return []
-
-    soup = BeautifulSoup(response.text, "html.parser")
-    titles = []
-
-    # Special handling for Criterion.com official list
-    if "criterion.com" in url:
-        print("Parsing Criterion.com official list...")
-        rows = soup.find_all("tr")
-        for row in rows:
-            title_cell = row.find("td", class_="g-title")
-            year_cell = row.find("td", class_="g-year")
-            if title_cell and year_cell:
-                t = title_cell.get_text(strip=True)
-                y = year_cell.get_text(strip=True)
-                if t and y and y.isdigit():
-                    titles.append(f"{t} ({y})")
-        unique_titles = sorted(list(set(titles)))
-        print(Fore.GREEN + f"{emojis.CHECK} Found {len(unique_titles)} unique movies from Criterion.com.")
-        return unique_titles
-
-    # Find all tables with class 'wikitable' (standard for film lists)
-    tables = soup.find_all("table", {"class": "wikitable"})
-
-    if not tables:
-        print(Fore.RED + "No tables found on the Wikipedia page.")
-        return []
-
-    print(f"Scanning {len(tables)} tables for film data...")
-
-    for table in tables:
-        # Attempt to identify columns by header text
-        headers = [th.get_text(strip=True).lower() for th in table.find_all("th")]
-
-        # Identify all potential columns
-        title_indices = []
-        date_indices = []
-
-        for i, h in enumerate(headers):
-            if "title" in h or "film" in h or "winner" in h:
-                title_indices.append(i)
-            if "release" in h or "date" in h or "year" in h:
-                date_indices.append(i)
-
-        # Select best columns
-        # Prefer a title column that isn't also a date column (e.g. avoid "Year of Film")
-        clean_title_indices = [i for i in title_indices if i not in date_indices]
-
-        title_idx = -1
-        date_idx = -1
-
-        if clean_title_indices:
-            title_idx = clean_title_indices[0]
-        elif title_indices:
-            title_idx = title_indices[0]
-
-        if date_indices:
-            date_idx = date_indices[0]
-
-        # If headers aren't clear, skip this table (avoids scraping random data)
-        if title_idx == -1 or date_idx == -1:
-            continue
-
-        rows = table.find_all("tr")
-        for row in rows:
-            cols = row.find_all(["td", "th"])
-            # Ensure row has enough columns
-            if not cols or len(cols) <= max(title_idx, date_idx):
-                continue
-
-            # Extract Title (often in <i> tags, but get_text handles it)
-            title_text = cols[title_idx].get_text(strip=True)
-
-            # Extract Year from date column
-            date_text = cols[date_idx].get_text(strip=True)
-            # Regex to find the first 4-digit year
-            year_match = re.search(r"\d{4}", date_text)
-
-            if title_text and year_match:
-                # Clean title (remove footnotes like [1])
-                title_clean = re.sub(r"\[.*?\]", "", title_text).strip().strip('"“”')
-                titles.append(f"{title_clean} ({year_match.group(0)})")
-
-    unique_titles = sorted(list(set(titles)))
-    print(Fore.GREEN + f"{emojis.CHECK} Found {len(unique_titles)} unique movies from Wikipedia.")
-    return unique_titles
-
-
 def run_studio_mode(tmdb, config, pause_fn):
     """
     Handles the studio/keyword mode.
@@ -506,8 +374,7 @@ def run_studio_mode(tmdb, config, pause_fn):
     - items: list of titles (str) OR list of Plex objects
     - is_pre_matched: True if items are already Plex objects
     """
-    if os.name == "nt": os.system("cls")
-    else: os.system("clear")
+    clear_screen()
     print(PLEX_YELLOW + f"{emojis.STUDIO}  Studio / Collection Mode")
 
     print(Fore.GREEN + "1." + Fore.RESET + " Search Local Plex Library (Uses Plex API to find existing movies)")
@@ -566,13 +433,13 @@ def run_studio_mode(tmdb, config, pause_fn):
 
     if mode == "3":
         # Wikipedia Scraping
-        print_grid(WIKIPEDIA_URLS.keys(), columns=2, padding=40, title=Fore.GREEN + "\nSupported Studios:")
-        choice = pick_from_list_case_insensitive("\n" + Fore.LIGHTBLACK_EX + "Select a studio (Esc to cancel): ", WIKIPEDIA_URLS.keys())
+        print_grid(constants.WIKIPEDIA_URLS.keys(), columns=2, padding=40, title=Fore.GREEN + "\nSupported Studios:")
+        choice = pick_from_list_case_insensitive("\n" + Fore.LIGHTBLACK_EX + "Select a studio (Esc to cancel): ", constants.WIKIPEDIA_URLS.keys())
         if choice is None:
             return None, None, False
 
-        url = WIKIPEDIA_URLS[choice]
-        titles = scrape_wikipedia_film_list(url)
+        url = constants.WIKIPEDIA_URLS[choice]
+        titles = scraper.scrape_wikipedia_film_list(url)
 
         if not titles:
             pause_fn()
@@ -584,16 +451,6 @@ def run_studio_mode(tmdb, config, pause_fn):
 
         return collection_name.strip(), titles, False
 
-    studio_map = {
-        "a24": {"company": 41077}, "pixar": {"company": 3},
-        "studio ghibli": {"company": 10342}, "mcu": {"keyword": 180547},
-        "dceu": {"keyword": 229266},
-        "neon": {"company": 93920},
-        "dreamworks animation": {"company": 521},
-        "searchlight pictures": {"company": 43},
-        "disney animation": {"company": 2},
-        "the criterion collection": {"company": 10994},
-    }
     titles = []
 
     if not tmdb:
@@ -607,7 +464,7 @@ def run_studio_mode(tmdb, config, pause_fn):
     else:
         pretty_names = []
         pretty_to_key = {}
-        for key in studio_map.keys():
+        for key in constants.STUDIO_MAP.keys():
             pretty = key.upper() if key in ("mcu", "dceu") else key.title()
             pretty_names.append(pretty)
             pretty_to_key[pretty.lower()] = key
@@ -616,7 +473,7 @@ def run_studio_mode(tmdb, config, pause_fn):
         if choice_pretty is None:
             return None, None, False
         norm_key = pretty_to_key[choice_pretty.lower()]
-        studio_info = studio_map[norm_key]
+        studio_info = constants.STUDIO_MAP[norm_key]
 
         def fetch_movies_by_company_or_keyword(api_key, company_id=None, keyword_id=None):
             url = "https://api.themoviedb.org/3/discover/movie"
@@ -885,8 +742,7 @@ def process_and_create_collection(collection_name, items, config, pause_fn, is_p
 
 def run_poster_tool(config, pause_fn):
     """Sub-menu for fixing posters using TMDb."""
-    if os.name == "nt": os.system("cls")
-    else: os.system("clear")
+    clear_screen()
 
     print(PLEX_YELLOW + f"{emojis.ART}  Fix Posters & Backgrounds")
     print("This tool uses the Plex API to automatically select TMDb-sourced artwork for your items.\n")
