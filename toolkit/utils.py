@@ -18,6 +18,14 @@ def is_escape(value):
     return val == "esc" or val == "escape" or val == "\x1b"
 
 
+def clear_screen():
+    """Clears the terminal screen in a cross-platform way."""
+    if os.name == "nt":
+        os.system("cls")
+    else:
+        os.system("clear")
+
+
 def get_single_keypress():
     """Waits for a single keypress and returns it (Cross-platform)."""
     if os.name == "nt":

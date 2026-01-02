@@ -27,6 +27,7 @@ from toolkit.utils import (
     save_config,
     print_grid,
     pick_from_list_case_insensitive,
+    clear_screen,
 )
 
 
@@ -103,14 +104,6 @@ config = load_config()
 PLEX_TOKEN = config.get("PLEX_TOKEN")
 PLEX_URL = config.get("PLEX_URL")
 TMDB_API_KEY = config.get("TMDB_API_KEY")
-
-
-def clear_screen():
-    """Clears the terminal screen in a cross-platform way."""
-    if os.name == "nt":
-        os.system("cls")
-    else:
-        os.system("clear")
 
 
 def welcome():
