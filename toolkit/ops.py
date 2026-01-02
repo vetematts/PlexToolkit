@@ -7,14 +7,16 @@ from toolkit.utils import (
     normalize_title,
     read_index_or_skip,
     read_line,
-    UserAbort
+    UserAbort,
 )
+
 
 def format_plex_item(item) -> str:
     """Formats a Plex media item into 'Title (Year)'."""
     title = getattr(item, "title", str(item))
     year = getattr(item, "year", None)
     return f"{title} ({year})" if year else title
+
 
 def pick_plex_match(raw_title: str, results):
     """Handles user selection when multiple Plex matches are found."""
@@ -38,43 +40,67 @@ def pick_plex_match(raw_title: str, results):
             if abs(search_year - item_year) <= 1:
                 years_match = True
             else:
-                continue # Strict year mismatch
+                continue  # Strict year mismatch
 
         # 2. Title Matching Logic
         is_match = False
-        if search_norm == item_norm: is_match = True
-        elif item_norm.startswith(search_norm) and (len(item_norm) == len(search_norm) or item_norm[len(search_norm)] == " "): is_match = True
-        elif search_norm.startswith(item_norm) and (len(search_norm) == len(item_norm) or search_norm[len(item_norm)] == " "): is_match = True
+        if search_norm == item_norm:
+            is_match = True
+        elif item_norm.startswith(search_norm) and (
+            len(item_norm) == len(search_norm) or item_norm[len(search_norm)] == " "
+        ):
+            is_match = True
+        elif search_norm.startswith(item_norm) and (
+            len(search_norm) == len(item_norm) or search_norm[len(item_norm)] == " "
+        ):
+            is_match = True
 
         if not is_match and years_match:
             ratio = difflib.SequenceMatcher(None, search_norm, item_norm).ratio()
-            if ratio > 0.85: is_match = True
+            if ratio > 0.85:
+                is_match = True
 
         if is_match:
             good_matches.append(item)
 
-    if not good_matches: return None
+    if not good_matches:
+        return None
 
-    good_matches.sort(key=lambda x: difflib.SequenceMatcher(None, search_norm, normalize_title(x.title)).ratio(), reverse=True)
+    good_matches.sort(
+        key=lambda x: difflib.SequenceMatcher(
+            None, search_norm, normalize_title(x.title)
+        ).ratio(),
+        reverse=True,
+    )
 
     if len(good_matches) > 0:
         best = good_matches[0]
         best_norm = normalize_title(best.title)
-        if best_norm == search_norm: return best
-        if best_norm.startswith(search_norm) and len(good_matches) == 1: return best
-        if search_norm.startswith(best_norm) and len(good_matches) == 1: return best
+        if best_norm == search_norm:
+            return best
+        if best_norm.startswith(search_norm) and len(good_matches) == 1:
+            return best
+        if search_norm.startswith(best_norm) and len(good_matches) == 1:
+            return best
 
-    if len(good_matches) == 1: return good_matches[0]
+    if len(good_matches) == 1:
+        return good_matches[0]
 
     print(f"\nMultiple Plex matches for '{raw_title}':")
     for i, item in enumerate(good_matches, 1):
         print(f"{i}. {format_plex_item(item)}")
 
-    idx = read_index_or_skip(len(good_matches), "Pick a number + Enter, 's' to skip, or Esc to cancel: ")
-    if idx is None: return None
+    idx = read_index_or_skip(
+        len(good_matches), "Pick a number + Enter, 's' to skip, or Esc to cancel: "
+    )
+    if idx is None:
+        return None
     return good_matches[idx - 1]
 
-def process_and_create_collection(collection_name, items, config, pause_fn, is_pre_matched=False):
+
+def process_and_create_collection(
+    collection_name, items, config, pause_fn, is_pre_matched=False
+):
     """Connects to Plex, finds movies, and creates the collection."""
     plex_token = config.get("PLEX_TOKEN")
     plex_url = config.get("PLEX_URL")
@@ -87,7 +113,8 @@ def process_and_create_collection(collection_name, items, config, pause_fn, is_p
         plex_manager = PlexManager(plex_token, plex_url)
         library_name = (config.get("PLEX_LIBRARY") or "Movies").strip() or "Movies"
         library = plex_manager.get_movie_library(library_name)
-        if not library: raise ConnectionError(f"Movie library '{library_name}' not found.")
+        if not library:
+            raise ConnectionError(f"Movie library '{library_name}' not found.")
     except Exception as e:
         print(Fore.RED + f"\n{emojis.CROSS} Could not connect to Plex: {e}")
         pause_fn()
@@ -135,7 +162,9 @@ def process_and_create_collection(collection_name, items, config, pause_fn, is_p
 
     try:
         library.createCollection(collection_name, items=found_movies)
-        print(f"\n{emojis.CHECK} Created collection '{collection_name}' with {len(found_movies)} movies.")
+        print(
+            f"\n{emojis.CHECK} Created collection '{collection_name}' with {len(found_movies)} movies."
+        )
     except Exception as e:
         print(Fore.RED + f"\n{emojis.CROSS} Failed to create collection: {e}")
     pause_fn()

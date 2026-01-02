@@ -8,6 +8,7 @@ try:
 except ImportError:
     BeautifulSoup = None
 
+
 def scrape_wikipedia_film_list(url: str) -> list[str]:
     """
     Scrapes a Wikipedia 'List of X films' page for titles and years.
@@ -19,7 +20,9 @@ def scrape_wikipedia_film_list(url: str) -> list[str]:
 
     print(f"\n{emojis.URL} Fetching data from web source...")
     try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
     except Exception as e:
@@ -42,7 +45,10 @@ def scrape_wikipedia_film_list(url: str) -> list[str]:
                 if t and y and y.isdigit():
                     titles.append(f"{t} ({y})")
         unique_titles = sorted(list(set(titles)))
-        print(Fore.GREEN + f"{emojis.CHECK} Found {len(unique_titles)} unique movies from Criterion.com.")
+        print(
+            Fore.GREEN
+            + f"{emojis.CHECK} Found {len(unique_titles)} unique movies from Criterion.com."
+        )
         return unique_titles
 
     # Find all tables with class 'wikitable' (standard for film lists)
@@ -108,5 +114,8 @@ def scrape_wikipedia_film_list(url: str) -> list[str]:
                 titles.append(f"{title_clean} ({year_match.group(0)})")
 
     unique_titles = sorted(list(set(titles)))
-    print(Fore.GREEN + f"{emojis.CHECK} Found {len(unique_titles)} unique movies from Wikipedia.")
+    print(
+        Fore.GREEN
+        + f"{emojis.CHECK} Found {len(unique_titles)} unique movies from Wikipedia."
+    )
     return unique_titles
