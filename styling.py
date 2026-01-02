@@ -1,6 +1,3 @@
-
-
-
 from colorama import Fore, Style
 
 # Custom Plex Yellow Colour (Hex: #EBAF01 -> RGB: 235, 175, 1)
@@ -38,13 +35,22 @@ YELLOW_ZONES = {
     11: (47, 53),
 }
 
+
 def print_plex_logo_ascii():
     lines = PLEX_LOGO_ASCII.strip("\n").splitlines()
     for i, line in enumerate(lines):
         if i in YELLOW_ZONES:
             start, end = YELLOW_ZONES[i]
             if len(line) >= end:
-                print(Fore.WHITE + line[:start] + PLEX_YELLOW + line[start:end] + Fore.WHITE + line[end:] + Style.RESET_ALL)
+                print(
+                    Fore.WHITE
+                    + line[:start]
+                    + PLEX_YELLOW
+                    + line[start:end]
+                    + Fore.WHITE
+                    + line[end:]
+                    + Style.RESET_ALL
+                )
             else:
                 print(Fore.WHITE + line + Style.RESET_ALL)
         else:

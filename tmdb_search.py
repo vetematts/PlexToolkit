@@ -1,6 +1,7 @@
 from tmdbv3api import TMDb, Search, Collection
 import requests
 
+
 class TMDbSearch:
     def __init__(self, api_key):
         self.tmdb = TMDb()
@@ -42,7 +43,12 @@ class TMDbSearch:
         Fetches movies by company or keyword, handling pagination automatically.
         """
         url = "https://api.themoviedb.org/3/discover/movie"
-        params = {"api_key": self.tmdb.api_key, "language": "en-US", "sort_by": "popularity.desc", "page": 1}
+        params = {
+            "api_key": self.tmdb.api_key,
+            "language": "en-US",
+            "sort_by": "popularity.desc",
+            "page": 1,
+        }
 
         # We will fetch two lists if both IDs are present to simulate an OR search
         queries = []
@@ -60,7 +66,9 @@ class TMDbSearch:
             current_params["page"] = 1
 
             while True:
-                print(f"Fetching page {current_params['page']}...", end='\r', flush=True)
+                print(
+                    f"Fetching page {current_params['page']}...", end="\r", flush=True
+                )
                 resp = requests.get(url, params=current_params, timeout=10)
                 if resp.status_code == 401:
                     raise ValueError("TMDb authentication failed (invalid API key).")
@@ -84,5 +92,5 @@ class TMDbSearch:
                     break
                 current_params["page"] += 1
 
-        print(" " * 40, end='\r', flush=True)
+        print(" " * 40, end="\r", flush=True)
         return sorted(list(all_titles))

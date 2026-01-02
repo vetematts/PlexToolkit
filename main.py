@@ -21,7 +21,7 @@ from utils import (
     load_config,
     save_config,
     print_grid,
-    pick_from_list_case_insensitive
+    pick_from_list_case_insensitive,
 )
 
 
@@ -150,12 +150,14 @@ def handle_main_menu() -> str:
     )
     print(Fore.GREEN + "3." + Fore.RESET + f" {emojis.MANUAL} Manual Entry\n")
     print(
-        Fore.YELLOW
-        + "4."
-        + Fore.RESET
-        + f" {emojis.ART} Fix Posters & Backgrounds\n"
+        Fore.YELLOW + "4." + Fore.RESET + f" {emojis.ART} Fix Posters & Backgrounds\n"
     )
-    print(Fore.YELLOW + "5." + Fore.RESET + f" {emojis.CONFIGURE} Settings & Credentials\n")
+    print(
+        Fore.YELLOW
+        + "5."
+        + Fore.RESET
+        + f" {emojis.CONFIGURE} Settings & Credentials\n"
+    )
     print(Fore.RED + "6." + Fore.RESET + f" {emojis.EXIT} Exit\n")
     print(
         Fore.LIGHTBLACK_EX
@@ -175,8 +177,15 @@ def handle_credentials_menu():
         print(Fore.YELLOW + "1." + Fore.RESET + f" {emojis.KEY} Set Plex Token\n")
         print(Fore.YELLOW + "2." + Fore.RESET + f" {emojis.URL} Set Plex URL\n")
         print(Fore.BLUE + "3." + Fore.RESET + f" {emojis.CLAPPER} Set TMDb API Key\n")
-        print(Fore.CYAN + "4." + Fore.RESET + f" {emojis.MOVIE} Set Plex Library Name\n")
-        print(Fore.GREEN + "5." + Fore.RESET + f" {emojis.INFO}  Test Connections (Plex + TMDb)\n")
+        print(
+            Fore.CYAN + "4." + Fore.RESET + f" {emojis.MOVIE} Set Plex Library Name\n"
+        )
+        print(
+            Fore.GREEN
+            + "5."
+            + Fore.RESET
+            + f" {emojis.INFO}  Test Connections (Plex + TMDb)\n"
+        )
         print(Fore.GREEN + "6." + Fore.RESET + f" {emojis.BOOK} Show current values\n")
         print(Fore.RED + "7." + Fore.RESET + f" {emojis.BACK} Return to main menu\n")
         choice = read_menu_choice("Select an option (Esc to go back): ", set("1234567"))
@@ -193,7 +202,10 @@ def handle_credentials_menu():
                 continue
             new_token = new_token.strip()
             if not new_token:
-                print(Fore.RED + f"{emojis.CROSS} Plex Token cannot be empty. Not saved.\n")
+                print(
+                    Fore.RED
+                    + f"{emojis.CROSS} Plex Token cannot be empty. Not saved.\n"
+                )
                 pause()
                 continue
             config["PLEX_TOKEN"] = new_token
@@ -208,14 +220,18 @@ def handle_credentials_menu():
                 continue
             new_url = new_url.strip()
             if not new_url:
-                print(Fore.RED + f"{emojis.CROSS} Plex URL cannot be empty. Not saved.\n")
+                print(
+                    Fore.RED + f"{emojis.CROSS} Plex URL cannot be empty. Not saved.\n"
+                )
                 pause()
                 continue
 
             # Sanitize: remove spaces (common when copying from Plex UI: "IP : Port")
             new_url = new_url.replace(" ", "")
             # Auto-add http:// if missing
-            if not new_url.lower().startswith("http://") and not new_url.lower().startswith("https://"):
+            if not new_url.lower().startswith(
+                "http://"
+            ) and not new_url.lower().startswith("https://"):
                 new_url = "http://" + new_url
                 print(Fore.YELLOW + f"{emojis.INFO} Auto-formatted URL to: {new_url}")
 
@@ -252,16 +268,29 @@ def handle_credentials_menu():
 
             current_library = config.get("PLEX_LIBRARY", "Movies")
             if available_libs:
-                print_grid(available_libs, columns=2, padding=30, title=Fore.GREEN + "Available Libraries:")
-                new_library = pick_from_list_case_insensitive(f"\nSelect a library (current: {current_library}) (Esc to cancel): ", available_libs)
+                print_grid(
+                    available_libs,
+                    columns=2,
+                    padding=30,
+                    title=Fore.GREEN + "Available Libraries:",
+                )
+                new_library = pick_from_list_case_insensitive(
+                    f"\nSelect a library (current: {current_library}) (Esc to cancel): ",
+                    available_libs,
+                )
             else:
-                new_library = read_line(f"Enter Plex library name (current: {current_library}) (Esc to cancel): ")
+                new_library = read_line(
+                    f"Enter Plex library name (current: {current_library}) (Esc to cancel): "
+                )
 
             if new_library is None:
                 continue
             new_library = new_library.strip()
             if not new_library:
-                print(Fore.RED + f"{emojis.CROSS} Plex library name cannot be empty. Not saved.\n")
+                print(
+                    Fore.RED
+                    + f"{emojis.CROSS} Plex library name cannot be empty. Not saved.\n"
+                )
                 pause()
                 continue
             config["PLEX_LIBRARY"] = new_library
@@ -337,11 +366,12 @@ def run_collection_builder():
             collection_name, titles = features.run_franchise_mode(tmdb, pause)
 
         elif mode == "2":
-            collection_name, titles, is_pre_matched = features.run_studio_mode(tmdb, config, pause)
+            collection_name, titles, is_pre_matched = features.run_studio_mode(
+                tmdb, config, pause
+            )
 
         elif mode == "3":
             collection_name, titles = features.run_manual_mode(pause)
-
 
         # If user cancelled or no titles were found, go back to main menu
         if not collection_name or not titles:
@@ -350,8 +380,9 @@ def run_collection_builder():
                 pause()
             continue
 
-
-        ops.process_and_create_collection(collection_name, titles, config, pause, is_pre_matched=is_pre_matched)
+        ops.process_and_create_collection(
+            collection_name, titles, config, pause, is_pre_matched=is_pre_matched
+        )
 
 
 if __name__ == "__main__":
