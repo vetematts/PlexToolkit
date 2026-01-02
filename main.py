@@ -109,6 +109,7 @@ TMDB_API_KEY = config.get("TMDB_API_KEY")
 def welcome():
     """Display welcome message and Plex logo, clearing the screen first."""
     clear_screen()
+    print()
     print_plex_logo_ascii()
     print(PLEX_YELLOW + f"\n{emojis.MOVIE} Welcome to the Plex Toolkit!\n")
 
