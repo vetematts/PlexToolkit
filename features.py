@@ -124,7 +124,7 @@ def run_studio_mode(tmdb, config, pause_fn):
             print(f"\n{emojis.INFO} Scanning Plex library for studios...")
             all_items = library.all()
             studio_query = read_line(
-                f"\nEnter Studio Name (partial match allowed) (Esc to cancel): "
+                "\nEnter Studio Name (partial match allowed) (Esc to cancel): "
             )
             if not studio_query:
                 return None, None, False
