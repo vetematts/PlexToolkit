@@ -14,7 +14,7 @@ class PlexManager:
         except (requests.exceptions.RequestException, Unauthorized) as e:
             # Re-raise as a standard ConnectionError for the main script to handle.
             raise ConnectionError(
-                f"Failed to connect to Plex. Please check the URL and Token."
+                "Failed to connect to Plex. Please check the URL and Token."
             ) from e
 
     def get_movie_library(self, library_name):
