@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import sys
 from colorama import Fore
 
 class UserAbort(Exception):
@@ -23,18 +24,38 @@ def read_line(prompt, allow_escape=True):
         print()
         return None
 
-def read_menu_choice(prompt, valid_choices):
-    while True:
+def get_single_keypress():
+    """Waits for a single keypress and returns it (Cross-platform)."""
+    if os.name == 'nt':
+        import msvcrt
+        raw = msvcrt.getch()
         try:
-            choice = input(prompt).strip()
-        except KeyboardInterrupt:
+            return raw.decode('utf-8')
+        except UnicodeDecodeError:
+            return str(raw)
+    else:
+        import tty
+        import termios
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(sys.stdin.fileno())
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
+
+def read_menu_choice(prompt, valid_choices):
+    print(prompt, end='', flush=True)
+    while True:
+        key = get_single_keypress()
+        # Handle ESC (ASCII 27) or Ctrl+C (ASCII 3)
+        if key == '\x1b' or key == '\x03':
             print()
             return "ESC"
-        if is_escape(choice):
-            return "ESC"
-        if choice in valid_choices:
-            return choice
-        print(Fore.RED + "Invalid selection. Please try again." + Fore.RESET)
+        if key in valid_choices:
+            print(key)
+            return key
 
 def get_config_path():
     return os.path.join(os.path.dirname(__file__), "config.json")
