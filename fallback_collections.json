@@ -1,0 +1,98 @@
+{
+  "Franchises": {
+    "Star Wars": [
+      "Star Wars",
+      "Star Wars: Episode V - The Empire Strikes Back",
+      "Star Wars: Episode VI - Return of the Jedi",
+      "Star Wars: Episode I - The Phantom Menace",
+      "Star Wars: Episode II - Attack of the Clones",
+      "Star Wars: Episode III - Revenge of the Sith",
+      "Star Wars: Episode VII - The Force Awakens",
+      "Star Wars: Episode VIII - The Last Jedi",
+      "Star Wars: The Rise Of Skywalker"
+    ],
+    "Harry Potter": [
+      "Harry Potter and the Philosopher's Stone",
+      "Harry Potter and the Chamber of Secrets",
+      "Harry Potter and the Prisoner of Azkaban",
+      "Harry Potter and the Goblet of Fire",
+      "Harry Potter and the Order of the Phoenix",
+      "Harry Potter and the Half-Blood Prince",
+      "Harry Potter and the Deathly Hallows: Part 1",
+      "Harry Potter and the Deathly Hallows: Part 2"
+    ],
+    "The Dark Knight": [
+      "Batman Begins",
+      "The Dark Knight",
+      "The Dark Knight Rises"
+    ],
+    "The Lord of the Rings": [
+      "The Lord of the Rings: The Fellowship of the Ring",
+      "The Lord of the Rings: The Two Towers",
+      "The Lord of the Rings: The Return of the King"
+    ]
+  },
+
+  "Studios": {
+    "A24": [
+      "Hereditary",
+      "Midsommar",
+      "The Lighthouse",
+      "Uncut Gems",
+      "Lady Bird",
+      "Moonlight",
+      "The Green Knight",
+      "X",
+      "Everything Everywhere All at Once",
+      "Aftersun"
+    ],
+    "Pixar": [
+      "Toy Story",
+      "Finding Nemo",
+      "The Incredibles",
+      "Ratatouille",
+      "Up",
+      "Inside Out",
+      "Coco",
+      "Soul",
+      "Luca",
+      "Turning Red"
+    ],
+    "Studio Ghibli": [
+      "My Neighbor Totoro",
+      "Spirited Away",
+      "Princess Mononoke",
+      "Howl's Moving Castle",
+      "Nausicaä of the Valley of the Wind",
+      "Kiki's Delivery Service",
+      "Ponyo",
+      "The Wind Rises",
+      "The Tale of the Princess Kaguya",
+      "Earwig and the Witch"
+    ],
+    "MCU": [
+      "Iron Man",
+      "The Avengers",
+      "Captain America: The Winter Soldier",
+      "Guardians of the Galaxy",
+      "Avengers: Age of Ultron",
+      "Doctor Strange",
+      "Black Panther",
+      "Avengers: Infinity War",
+      "Avengers: Endgame",
+      "Spider-Man: No Way Home"
+    ],
+    "DCEU": [
+      "Man of Steel",
+      "Batman v Superman: Dawn of Justice",
+      "Suicide Squad",
+      "Wonder Woman",
+      "Justice League",
+      "Aquaman",
+      "Shazam!",
+      "Birds of Prey",
+      "The Suicide Squad",
+      "Black Adam"
+    ]
+  }
+}
