@@ -8,9 +8,7 @@ import os
 import json
 import re
 import sys
-import contextlib
 from datetime import datetime, timezone
-from typing import Optional
 import difflib
 import requests
 
@@ -26,8 +24,19 @@ import emojis
 from plex_manager import PlexManager
 from tmdb_search import TMDbSearch
 from styling import print_plex_logo_ascii, PLEX_YELLOW
-
-CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
+from utils import (
+    read_line,
+    read_menu_choice,
+    load_config,
+    save_config,
+    print_grid,
+    pick_from_list_case_insensitive,
+    extract_title_and_year,
+    normalize_title,
+    read_index_or_skip,
+    UserAbort,
+    is_escape
+)
 
 WIKIPEDIA_URLS = {
     "A24": "https://en.wikipedia.org/wiki/List_of_A24_films",
@@ -42,158 +51,6 @@ WIKIPEDIA_URLS = {
     "Neon": "https://en.wikipedia.org/wiki/List_of_Neon_films",
     "The Criterion Collection": "https://www.criterion.com/shop/browse/list?sort=spine_number",
 }
-
-def is_escape(value: str) -> bool:
-    if value is None:
-        return False
-    value = value.strip()
-    return value == "\x1b" or value.lower() in ("esc", "escape")
-
-@contextlib.contextmanager
-def _raw_input_mode():
-    """
-    Temporarily switch stdin into a mode where we can read single keypresses.
-    Falls back to normal behaviour when stdin isn't a TTY.
-    """
-    if not sys.stdin.isatty():
-        yield
-        return
-    if os.name == "nt":
-        yield
-        return
-    import termios
-    import tty
-
-    fd = sys.stdin.fileno()
-    old = termios.tcgetattr(fd)
-    try:
-        tty.setraw(fd)
-        yield
-    finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old)
-
-
-def read_keypress() -> Optional[str]:
-    """
-    Reads a single keypress and returns:
-    - "ESC" for Escape
-    - "ENTER" for Enter/Return
-    - "BACKSPACE" for Backspace/Delete
-    - otherwise the literal character (e.g., "1", "y", "a")
-    Returns None if stdin isn't a TTY (caller should fall back to input()).
-    """
-    if not sys.stdin.isatty():
-        return None
-
-    if os.name == "nt":
-        import msvcrt
-
-        ch = msvcrt.getwch()
-        if ch == "\x1b":
-            return "ESC"
-        if ch in ("\r", "\n"):
-            return "ENTER"
-        if ch in ("\b", "\x7f"):
-            return "BACKSPACE"
-        return ch
-
-    with _raw_input_mode():
-        ch = sys.stdin.read(1)
-    if ch == "\x1b":
-        return "ESC"
-    if ch in ("\r", "\n"):
-        return "ENTER"
-    if ch in ("\b", "\x7f"):
-        return "BACKSPACE"
-    return ch
-
-
-def read_menu_choice(prompt: str, valid: set[str]) -> str:
-    """
-    Reads a single-key choice (no Enter) when possible; falls back to input().
-    """
-    if not sys.stdin.isatty():
-        return input(prompt).strip()
-
-    print(prompt, end="", flush=True)
-    while True:
-        key = read_keypress()
-        if key is None:
-            return input().strip()
-        if key == "ESC":
-            print("Esc")
-            return "ESC"
-        if key == "ENTER":
-            continue
-        if len(key) == 1:
-            candidate = key.strip()
-            if candidate in valid:
-                print(candidate)
-                return candidate
-
-def read_line(prompt: str, allow_escape: bool = True) -> Optional[str]:
-    """
-    Reads a full line of text, but supports true Escape (no Enter) when stdin is a TTY.
-    Returns None when Esc is pressed (and allow_escape is True).
-    """
-    if not sys.stdin.isatty():
-        text = input(prompt)
-        if allow_escape and is_escape(text):
-            return None
-        return text
-
-    print(prompt, end="", flush=True)
-    buf = []
-    while True:
-        key = read_keypress()
-        if key is None:
-            text = input().strip()
-            if allow_escape and is_escape(text):
-                return None
-            return text
-
-        if key == "ESC" and allow_escape:
-            print()
-            return None
-        if key == "ENTER":
-            print()
-            return "".join(buf)
-        if key == "BACKSPACE":
-            if buf:
-                buf.pop()
-                sys.stdout.write("\b \b")
-                sys.stdout.flush()
-            continue
-        if len(key) == 1 and key.isprintable():
-            buf.append(key)
-            sys.stdout.write(key)
-            sys.stdout.flush()
-
-
-def load_config():
-    # Load credentials from config.json, or return empty defaults if it doesn't exist
-    defaults = {
-        "PLEX_TOKEN": "",
-        "PLEX_URL": "",
-        "TMDB_API_KEY": "",
-        "PLEX_LIBRARY": "Movies",
-        "PLEX_LAST_TESTED": "",
-        "TMDB_LAST_TESTED": "",
-    }
-    if not os.path.exists(CONFIG_FILE):
-        return defaults.copy()
-    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    for key, value in defaults.items():
-        data.setdefault(key, value)
-    return data
-
-
-def save_config(cfg):
-    # Save the current credentials to config.json for future use
-    # Accepts a dictionary of credentials.
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        json.dump(cfg, f, indent=4)
 
 
 def _now_iso():
@@ -828,114 +685,6 @@ def run_studio_mode(tmdb, config, pause_fn):
     return collection_name.strip(), titles, False
 
 
-def extract_title_and_year(raw_title):
-    """Search movie title and optional year from user input. Example: "Inception (2010)" -> ("Inception", 2010)"""
-    match = re.match(r"^(.*?)(?:\s+\((\d{4})\))?$", raw_title.strip())
-    return (
-        match.group(1).strip(),
-        int(match.group(2)) if match.group(2) else None,
-    )
-
-def normalize_title(title):
-    """
-    Normalizes a title for comparison:
-    - Lowercase
-    - Expands common abbreviations (Dr. -> Drive, St. -> Street)
-    - Removes punctuation
-    - Removes leading 'The', 'A', 'An'
-    - Collapses spaces
-    """
-    if not title:
-        return ""
-    t = title.lower()
-    # Expand abbreviations (word boundary safe)
-    t = re.sub(r"\bdr\.?\b", "drive", t)
-    t = re.sub(r"\bst\.?\b", "street", t)
-    t = re.sub(r"\bvs\.?\b", "versus", t)
-    t = re.sub(r"\bpt\.?\b", "part", t)
-    t = re.sub(r"\bvol\.?\b", "volume", t)
-    # Remove punctuation (keep alphanumeric and spaces)
-    t = re.sub(r"[^\w\s]", "", t)
-    # Remove leading articles
-    t = re.sub(r"^(the|a|an)\s+", "", t)
-    # Collapse spaces
-    return re.sub(r"\s+", " ", t).strip()
-
-class UserAbort(Exception):
-    """Custom exception for when the user cancels an operation."""
-    pass
-
-
-def read_index_or_skip(max_value: int, prompt: str) -> Optional[int]:
-    """
-    Reads either:
-    - a numeric selection (1..max_value) + Enter
-    - 's' to skip (returns None)
-    - Esc to cancel (raises UserAbort)
-    """
-    if not sys.stdin.isatty():
-        while True:
-            raw = input(prompt).strip()
-            if is_escape(raw) or raw.lower() in ("q", "quit"):
-                raise UserAbort()
-            if raw.lower() in ("s", "skip"):
-                return None
-            if raw.isdigit():
-                idx = int(raw)
-                if 1 <= idx <= max_value:
-                    return idx
-            print("Invalid selection.")
-
-    print(prompt, end="", flush=True)
-    buf = []
-    while True:
-        key = read_keypress()
-        if key is None:
-            raw = input().strip()
-            if is_escape(raw) or raw.lower() in ("q", "quit"):
-                raise UserAbort()
-            if raw.lower() in ("s", "skip"):
-                return None
-            if raw.isdigit():
-                idx = int(raw)
-                if 1 <= idx <= max_value:
-                    return idx
-            print("Invalid selection.")
-            print(prompt, end="", flush=True)
-            buf = []
-            continue
-
-        if key == "ESC":
-            print()
-            raise UserAbort()
-        if key == "ENTER":
-            if not buf:
-                continue
-            raw = "".join(buf)
-            if raw.isdigit():
-                idx = int(raw)
-                if 1 <= idx <= max_value:
-                    print()
-                    return idx
-            print("\nInvalid selection.")
-            print(prompt, end="", flush=True)
-            buf = []
-            continue
-        if key == "BACKSPACE":
-            if buf:
-                buf.pop()
-                sys.stdout.write("\b \b")
-                sys.stdout.flush()
-            continue
-        if len(key) == 1 and key.lower() == "s":
-            print("s\nSkipped.")
-            return None
-        if len(key) == 1 and key.isdigit():
-            buf.append(key)
-            sys.stdout.write(key)
-            sys.stdout.flush()
-
-
 def format_plex_item(item) -> str:
     """Formats a Plex media item into 'Title (Year)'."""
     title = getattr(item, "title", str(item))
@@ -1292,48 +1041,6 @@ def load_fallback_data(section):
     with open(fallback_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     return data.get(section, {})
-
-
-def print_grid(names, columns=3, padding=28, title=None, title_emoji=None, sort=True):
-    # Prints the list of titles in columns for readability
-    if title:
-        print((title_emoji or "") + " " + title)
-    items = sorted(names) if sort else names
-    rows = [items[i : i + columns] for i in range(0, len(items), columns)]
-    for row in rows:
-        print("".join(name.ljust(padding) for name in row))
-
-
-def pick_from_list_case_insensitive(prompt, choices, back_allowed=True):
-    # Ask the user to pick an option from list of choices
-    # Returns the matched canonical item or None if user typed 'back' and back_allowed is True.
-    # Keeps prompting until a valid choice is entered.
-    lowered = {c.lower(): c for c in choices}
-    while True:
-        choice = read_line(prompt, allow_escape=True)
-        if choice is None:
-            return None if back_allowed else None
-        choice = choice.strip()
-        if choice.lower() in lowered:
-            return lowered[choice.lower()]
-
-        # Fuzzy match suggestion
-        matches = difflib.get_close_matches(choice, choices, n=1, cutoff=0.6)
-        if matches:
-            suggestion = matches[0]
-            confirm = read_line(f"Did you mean '{suggestion}'? (y/n): ", allow_escape=True)
-            if confirm and confirm.lower() == 'y':
-                return suggestion
-
-        print("Unknown option. Please type one of the listed items, or Esc to cancel.")
-
-
-def print_list(items, columns=3, padding=28):
-    # Prints the list of items in columns.
-    names = sorted(items)
-    rows = [names[i : i + columns] for i in range(0, len(names), columns)]
-    for row in rows:
-        print("".join(name.ljust(padding) for name in row))
 
 
 if __name__ == "__main__":
