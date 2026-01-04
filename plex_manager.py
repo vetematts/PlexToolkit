@@ -41,12 +41,11 @@ class PlexManager:
 
         # Get all studio names available in the library
         # filterChoices returns objects with 'title' (the studio name)
-        studio_choices = library.listFilterChoices('studio')
+        studio_choices = library.listFilterChoices("studio")
 
         # Find studios that match the query (partial match)
         matching_studios = [
-            choice.title for choice in studio_choices
-            if query in choice.title.lower()
+            choice.title for choice in studio_choices if query in choice.title.lower()
         ]
 
         # Search for movies belonging to these specific studios
