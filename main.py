@@ -101,9 +101,16 @@ def test_tmdb_connection(cfg):
 init(autoreset=True)
 
 config = load_config()
-PLEX_TOKEN = config.get("PLEX_TOKEN")
-PLEX_URL = config.get("PLEX_URL")
-TMDB_API_KEY = config.get("TMDB_API_KEY")
+
+# Allow Environment Variables to override config file (useful for Docker/CI)
+PLEX_TOKEN = os.getenv("PLEX_TOKEN", config.get("PLEX_TOKEN"))
+PLEX_URL = os.getenv("PLEX_URL", config.get("PLEX_URL"))
+TMDB_API_KEY = os.getenv("TMDB_API_KEY", config.get("TMDB_API_KEY"))
+
+# Update config object so the rest of the app uses the active credentials
+if PLEX_TOKEN: config["PLEX_TOKEN"] = PLEX_TOKEN
+if PLEX_URL: config["PLEX_URL"] = PLEX_URL
+if TMDB_API_KEY: config["TMDB_API_KEY"] = TMDB_API_KEY
 
 
 def welcome():

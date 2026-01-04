@@ -34,13 +34,30 @@ class PlexManager:
         return self.plex.library.sections()
 
     def get_items_by_studio(self, library, studio_name):
-        # Fetch all items and filter locally for better partial matching
-        # This catches "A24", "A24 Films", "A24 Productions", etc.
-        all_items = library.all()
+        # Optimization: Get list of studios first, then search specific ones.
+        # This avoids fetching metadata for the entire library (library.all()).
         query = studio_name.lower()
-        return [
-            item for item in all_items if item.studio and query in item.studio.lower()
+        matched_items = []
+
+        # Get all studio names available in the library
+        # filterChoices returns objects with 'title' (the studio name)
+        studio_choices = library.listFilterChoices('studio')
+
+        # Find studios that match the query (partial match)
+        matching_studios = [
+            choice.title for choice in studio_choices
+            if query in choice.title.lower()
         ]
+
+        # Search for movies belonging to these specific studios
+        for studio in matching_studios:
+            # library.search(studio=...) performs a server-side filter
+            results = library.search(studio=studio)
+            matched_items.extend(results)
+
+        # Deduplicate items by ratingKey (in case of weird overlaps)
+        unique_items = {item.ratingKey: item for item in matched_items}
+        return list(unique_items.values())
 
     def find_movies(self, library, titles):
         matched = []
@@ -67,6 +84,13 @@ class PlexManager:
                         if res.year and abs(res.year - year) <= 1:
                             return (title_query, res)
                 else:
+                    # No year provided. Prioritize an exact title match.
+                    target = clean_title.lower().strip()
+                    for res in results:
+                        if res.title.lower().strip() == target:
+                            return (title_query, res)
+
+                    # Fallback to first result if no exact match found
                     return (title_query, results[0])
             return None
 
