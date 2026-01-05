@@ -16,31 +16,50 @@ class InputHandler:
         """Reads a single character or escape sequence from stdin."""
         if not tty:
             # Windows fallback
-            if os.name == "nt":
+            if os.name == 'nt':
                 import msvcrt
-
                 ch = msvcrt.getch()
                 # Handle special keys (0x00 or 0xe0 followed by code)
-                if ch in (b"\x00", b"\xe0"):
+                if ch in (b'\x00', b'\xe0'):
                     ch = ch + msvcrt.getch()
-                return ch.decode("utf-8", errors="ignore")
+                return ch.decode('utf-8', errors='ignore')
             return sys.stdin.read(1)
 
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
         try:
-            tty.setraw(sys.stdin.fileno())
-            ch = sys.stdin.read(1)
-            if ch == "\x1b":
+            tty.setraw(fd)
+            # Use os.read to bypass Python's buffering, which causes select() to fail
+            # when data is already buffered in Python but not in the OS pipe.
+            b = os.read(fd, 1)
+            if not b:
+                return ""
+
+            if b == b"\x1b":
                 # Check for escape sequence (Arrow keys, etc.)
-                # select() is used to peek without blocking for long
-                if select.select([sys.stdin], [], [], 0.05)[0]:
-                    ch += sys.stdin.read(1)
-                    if select.select([sys.stdin], [], [], 0.05)[0]:
-                        ch += sys.stdin.read(1)
+                if select.select([fd], [], [], 0.05)[0]:
+                    b += os.read(fd, 1)
+                    if select.select([fd], [], [], 0.05)[0]:
+                        b += os.read(fd, 1)
+                return b.decode("utf-8", errors="ignore")
+
+            # Handle UTF-8 multi-byte characters
+            first = ord(b)
+            to_read = 0
+            if (first & 0xE0) == 0xC0: to_read = 1
+            elif (first & 0xF0) == 0xE0: to_read = 2
+            elif (first & 0xF8) == 0xF0: to_read = 3
+
+            while to_read > 0:
+                if select.select([fd], [], [], 0.05)[0]:
+                    b += os.read(fd, 1)
+                    to_read -= 1
+                else:
+                    break
+
+            return b.decode("utf-8", errors="ignore")
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        return ch
 
     @staticmethod
     def read_line(prompt=""):
