@@ -101,105 +101,105 @@ class InputHandler:
             while True:
                 key = InputHandler._read_char_raw()
 
-            # Handle Ctrl+C
-            if key == "\x03":
-                sys.stdout.write("\n")
-                return None
+                # Handle Ctrl+C
+                if key == "\x03":
+                    sys.stdout.write("\n")
+                    return None
 
-            # Handle ESC (Standalone)
-            if key == "\x1b":
-                sys.stdout.write("\n")
-                return None
+                # Handle ESC (Standalone)
+                if key == "\x1b":
+                    sys.stdout.write("\n")
+                    return None
 
-            # Handle Enter
-            if key in ("\r", "\n"):
-                sys.stdout.write("\n")
-                return "".join(buffer)
+                # Handle Enter
+                if key in ("\r", "\n"):
+                    sys.stdout.write("\n")
+                    return "".join(buffer)
 
-            # Handle Backspace (127 is DEL on Mac/Linux, 8 is BS)
-            if key in ("\x7f", "\x08"):
-                if cursor_pos > 0:
-                    buffer.pop(cursor_pos - 1)
-                    cursor_pos -= 1
-                    # Move back, clear to end of line, print rest
-                    tail = "".join(buffer[cursor_pos:])
-                    sys.stdout.write("\b" + tail + " " + "\b" * (len(tail) + 1))
-                    sys.stdout.flush()
-                continue
-
-            # Handle Arrow Keys (Escape Sequences)
-            if key.startswith("\x1b["):
-                seq = key[2:]
-                if seq == "D":  # Left Arrow
+                # Handle Backspace (127 is DEL on Mac/Linux, 8 is BS)
+                if key in ("\x7f", "\x08"):
                     if cursor_pos > 0:
+                        buffer.pop(cursor_pos - 1)
+                        cursor_pos -= 1
+                        # Move back, clear to end of line, print rest
+                        tail = "".join(buffer[cursor_pos:])
+                        sys.stdout.write("\b" + tail + " " + "\b" * (len(tail) + 1))
+                        sys.stdout.flush()
+                    continue
+
+                # Handle Arrow Keys (Escape Sequences)
+                if key.startswith("\x1b["):
+                    seq = key[2:]
+                    if seq == "D":  # Left Arrow
+                        if cursor_pos > 0:
+                            cursor_pos -= 1
+                            sys.stdout.write("\033[D")
+                            sys.stdout.flush()
+                    elif seq == "C":  # Right Arrow
+                        if cursor_pos < len(buffer):
+                            cursor_pos += 1
+                            sys.stdout.write("\033[C")
+                            sys.stdout.flush()
+                    # Ignore Up/Down (A/B)
+                    continue
+
+                # Handle Option+Left (Esc b) - Word Left
+                if key == "\x1bb":
+                    while cursor_pos > 0 and buffer[cursor_pos - 1] == " ":
                         cursor_pos -= 1
                         sys.stdout.write("\033[D")
-                        sys.stdout.flush()
-                elif seq == "C":  # Right Arrow
-                    if cursor_pos < len(buffer):
+                    while cursor_pos > 0 and buffer[cursor_pos - 1] != " ":
+                        cursor_pos -= 1
+                        sys.stdout.write("\033[D")
+                    sys.stdout.flush()
+                    continue
+
+                # Handle Option+Right (Esc f) - Word Right
+                if key == "\x1bf":
+                    while cursor_pos < len(buffer) and buffer[cursor_pos] != " ":
                         cursor_pos += 1
                         sys.stdout.write("\033[C")
+                    while cursor_pos < len(buffer) and buffer[cursor_pos] == " ":
+                        cursor_pos += 1
+                        sys.stdout.write("\033[C")
+                    sys.stdout.flush()
+                    continue
+
+                # Handle Home (Ctrl+A)
+                if key == "\x01":
+                    if cursor_pos > 0:
+                        sys.stdout.write(f"\033[{cursor_pos}D")
+                        cursor_pos = 0
                         sys.stdout.flush()
-                # Ignore Up/Down (A/B)
-                continue
+                    continue
 
-            # Handle Option+Left (Esc b) - Word Left
-            if key == "\x1bb":
-                while cursor_pos > 0 and buffer[cursor_pos - 1] == " ":
-                    cursor_pos -= 1
-                    sys.stdout.write("\033[D")
-                while cursor_pos > 0 and buffer[cursor_pos - 1] != " ":
-                    cursor_pos -= 1
-                    sys.stdout.write("\033[D")
-                sys.stdout.flush()
-                continue
+                # Handle End (Ctrl+E)
+                if key == "\x05":
+                    if cursor_pos < len(buffer):
+                        sys.stdout.write(f"\033[{len(buffer) - cursor_pos}C")
+                        cursor_pos = len(buffer)
+                        sys.stdout.flush()
+                    continue
 
-            # Handle Option+Right (Esc f) - Word Right
-            if key == "\x1bf":
-                while cursor_pos < len(buffer) and buffer[cursor_pos] != " ":
-                    cursor_pos += 1
-                    sys.stdout.write("\033[C")
-                while cursor_pos < len(buffer) and buffer[cursor_pos] == " ":
-                    cursor_pos += 1
-                    sys.stdout.write("\033[C")
-                sys.stdout.flush()
-                continue
-
-            # Handle Home (Ctrl+A)
-            if key == "\x01":
-                if cursor_pos > 0:
-                    sys.stdout.write(f"\033[{cursor_pos}D")
+                # Handle Clear Line (Ctrl+U)
+                if key == "\x15":
+                    if cursor_pos > 0:
+                        sys.stdout.write(f"\033[{cursor_pos}D")
+                    sys.stdout.write("\033[K")
+                    buffer = []
                     cursor_pos = 0
                     sys.stdout.flush()
-                continue
+                    continue
 
-            # Handle End (Ctrl+E)
-            if key == "\x05":
-                if cursor_pos < len(buffer):
-                    sys.stdout.write(f"\033[{len(buffer) - cursor_pos}C")
-                    cursor_pos = len(buffer)
+                # Handle Regular Printable Characters
+                if len(key) == 1 and key.isprintable():
+                    buffer.insert(cursor_pos, key)
+                    cursor_pos += 1
+                    tail = "".join(buffer[cursor_pos:])
+                    sys.stdout.write(key + tail)
+                    if tail:
+                        sys.stdout.write(f"\033[{len(tail)}D")
                     sys.stdout.flush()
-                continue
-
-            # Handle Clear Line (Ctrl+U)
-            if key == "\x15":
-                if cursor_pos > 0:
-                    sys.stdout.write(f"\033[{cursor_pos}D")
-                sys.stdout.write("\033[K")
-                buffer = []
-                cursor_pos = 0
-                sys.stdout.flush()
-                continue
-
-            # Handle Regular Printable Characters
-            if len(key) == 1 and key.isprintable():
-                buffer.insert(cursor_pos, key)
-                cursor_pos += 1
-                tail = "".join(buffer[cursor_pos:])
-                sys.stdout.write(key + tail)
-                if tail:
-                    sys.stdout.write(f"\033[{len(tail)}D")
-                sys.stdout.flush()
 
     @staticmethod
     def read_menu_choice(prompt, valid_choices):
