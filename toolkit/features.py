@@ -1,3 +1,4 @@
+from collections import Counter
 from colorama import Fore
 from toolkit import emojis
 from toolkit import constants
@@ -102,63 +103,78 @@ def run_studio_mode(tmdb, config, pause_fn):
     clear_screen()
     print()
     print(Fore.YELLOW + f"{emojis.STUDIO}  Studio / Collection Mode\n")
-    print(Fore.GREEN + "1." + Fore.RESET + " Search Local Plex Library")
-    print(Fore.GREEN + "2." + Fore.RESET + " Discover via TMDb API")
+    print(Fore.GREEN + "1." + Fore.RESET + " Discover via TMDb API")
 
     bs4_avail = scraper.BeautifulSoup is not None
     if bs4_avail:
-        print(Fore.GREEN + "3." + Fore.RESET + " Import from Web List (Wikipedia)")
+        print(Fore.GREEN + "2." + Fore.RESET + " Import from Web List (Wikipedia)")
     else:
         print(
             Fore.LIGHTBLACK_EX
-            + "3. Import from Web List (Install 'beautifulsoup4' to enable)"
+            + "2. Import from Web List (Install 'beautifulsoup4' to enable)"
         )
+    print(Fore.GREEN + "3." + Fore.RESET + " Search Local Plex Library")
 
     mode = read_menu_choice(
-        "\nSelect a method (Esc to cancel): ", set("123") if bs4_avail else set("12")
+        "\nSelect a method (Esc to cancel): ", set("123") if bs4_avail else set("13")
     )
-    if mode == "ESC":
+    if mode == "ESC" or mode is None:
         return None, None, False
 
+    # Option 1: TMDb (Moved from end of function)
     if mode == "1":
-        # Plex Native Search
-        try:
-            pm = PlexManager(config.get("PLEX_TOKEN"), config.get("PLEX_URL"))
-            library = pm.get_movie_library(config.get("PLEX_LIBRARY", "Movies"))
-            if not library:
-                return None, None, False
-
-            print(f"\n{emojis.INFO} Scanning Plex library for studios...")
-            all_items = library.all()
+        titles = []
+        if not tmdb:
             print(
-                Fore.LIGHTBLACK_EX
-                + "This searches the 'Studio' metadata of your existing movies."
-                + Fore.RESET
+                Fore.RED
+                + f"\n{emojis.CROSS} TMDb API key not provided. Using fallback data.\n"
             )
-            print(
-                Fore.LIGHTBLACK_EX + "Examples: 'Lucasfilm', 'A24', 'Warner Bros'" + Fore.RESET
+            studios_data = load_fallback_data("Studios")
+            choice = pick_from_list_case_insensitive(
+                "\n" + Fore.LIGHTBLACK_EX + "Select a studio (Esc to cancel): ",
+                studios_data.keys(),
             )
-            studio_query = read_line(
-                "\nEnter Studio Name (partial match allowed) (Esc to cancel): "
-            )
-            if not studio_query:
+            if choice is None:
                 return None, None, False
-
-            print(f"\nFiltering movies for studio '{studio_query}'...")
-            items = [
-                item
-                for item in all_items
-                if getattr(item, "studio", None)
-                and studio_query.lower() in item.studio.lower()
+            titles = studios_data.get(choice, [])
+        else:
+            pretty_names = [
+                k.upper() if k in ("mcu", "dceu") else k.title()
+                for k in constants.STUDIO_MAP.keys()
             ]
-            return studio_query.strip(), items, True
-        except Exception as e:
-            print(Fore.RED + f"Error searching Plex: {e}")
-            pause_fn()
-            return None, None, False
+            print_grid(
+                pretty_names,
+                columns=3,
+                padding=24,
+                title=Fore.GREEN + "\nAvailable Studios:",
+            )
+            choice_pretty = pick_from_list_case_insensitive(
+                "\n" + Fore.LIGHTBLACK_EX + "Select a studio (Esc to cancel): ",
+                pretty_names,
+            )
+            if choice_pretty is None:
+                return None, None, False
 
-    if mode == "3":
-        # Wikipedia
+            studio_info = constants.STUDIO_MAP[choice_pretty.lower()]
+            try:
+                titles = tmdb.discover_movies(
+                    company_id=studio_info.get("company"),
+                    keyword_id=studio_info.get("keyword"),
+                )
+            except Exception as e:
+                print(Fore.RED + f"{emojis.CROSS} Error retrieving movies from TMDb: {e}")
+                pause_fn()
+                return None, None, False
+
+        collection_name = read_line(
+            "Enter a name for your new collection (Esc to cancel): "
+        )
+        if collection_name is None:
+            return None, None, False
+        return collection_name.strip(), titles, False
+
+    # Option 2: Wikipedia (Moved from mode 3)
+    if mode == "2":
         print_grid(
             constants.WIKIPEDIA_URLS.keys(),
             columns=2,
@@ -184,56 +200,55 @@ def run_studio_mode(tmdb, config, pause_fn):
             collection_name = choice
         return collection_name.strip(), titles, False
 
-    # Mode 2: TMDb
-    titles = []
-    if not tmdb:
-        print(
-            Fore.RED
-            + f"\n{emojis.CROSS} TMDb API key not provided. Using fallback data.\n"
-        )
-        studios_data = load_fallback_data("Studios")
-        choice = pick_from_list_case_insensitive(
-            "\n" + Fore.LIGHTBLACK_EX + "Select a studio (Esc to cancel): ",
-            studios_data.keys(),
-        )
-        if choice is None:
-            return None, None, False
-        titles = studios_data.get(choice, [])
-    else:
-        pretty_names = [
-            k.upper() if k in ("mcu", "dceu") else k.title()
-            for k in constants.STUDIO_MAP.keys()
-        ]
-        print_grid(
-            pretty_names,
-            columns=3,
-            padding=24,
-            title=Fore.GREEN + "\nAvailable Studios:",
-        )
-        choice_pretty = pick_from_list_case_insensitive(
-            "\n" + Fore.LIGHTBLACK_EX + "Select a studio (Esc to cancel): ",
-            pretty_names,
-        )
-        if choice_pretty is None:
-            return None, None, False
-
-        studio_info = constants.STUDIO_MAP[choice_pretty.lower()]
+    # Option 3: Plex Native (Moved from mode 1)
+    if mode == "3":
         try:
-            titles = tmdb.discover_movies(
-                company_id=studio_info.get("company"),
-                keyword_id=studio_info.get("keyword"),
+            pm = PlexManager(config.get("PLEX_TOKEN"), config.get("PLEX_URL"))
+            library = pm.get_movie_library(config.get("PLEX_LIBRARY", "Movies"))
+            if not library:
+                return None, None, False
+
+            print(f"\n{emojis.INFO} Scanning Plex library for studios...")
+            all_items = library.all()
+
+            # Count studios to show popular ones
+            studio_counts = Counter()
+            for item in all_items:
+                if getattr(item, "studio", None):
+                    studio_counts[item.studio] += 1
+
+            top_studios = [f"{s} ({c})" for s, c in studio_counts.most_common(20)]
+            if top_studios:
+                print_grid(
+                    top_studios,
+                    columns=2,
+                    padding=35,
+                    title=Fore.GREEN + "\nTop Studios in Library:",
+                )
+
+            print(
+                Fore.LIGHTBLACK_EX
+                + "\nEnter a name from above or any other studio to search."
+                + Fore.RESET
             )
+            studio_query = read_line(
+                "\nEnter Studio Name (partial match allowed) (Esc to cancel): "
+            )
+            if not studio_query:
+                return None, None, False
+
+            print(f"\nFiltering movies for studio '{studio_query}'...")
+            items = [
+                item
+                for item in all_items
+                if getattr(item, "studio", None)
+                and studio_query.lower() in item.studio.lower()
+            ]
+            return studio_query.strip(), items, True
         except Exception as e:
-            print(Fore.RED + f"{emojis.CROSS} Error retrieving movies from TMDb: {e}")
+            print(Fore.RED + f"Error searching Plex: {e}")
             pause_fn()
             return None, None, False
-
-    collection_name = read_line(
-        "Enter a name for your new collection (Esc to cancel): "
-    )
-    if collection_name is None:
-        return None, None, False
-    return collection_name.strip(), titles, False
 
 
 def run_poster_tool(config, pause_fn):
