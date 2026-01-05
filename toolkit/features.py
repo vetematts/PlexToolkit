@@ -297,6 +297,12 @@ def run_studio_mode(tmdb, config, pause_fn):
             + f" {emojis.FRANCHISE} Use Built-in Lists (Offline)\n"
         )
         studios_data = load_fallback_data("Studios")
+        print_grid(
+            studios_data.keys(),
+            columns=3,
+            padding=24,
+            title=Fore.GREEN + "Available Studios:",
+        )
         choice = pick_from_list_case_insensitive(
             "\n" + Fore.LIGHTBLACK_EX + "Select a studio (Esc to cancel): ",
             studios_data.keys(),
