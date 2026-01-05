@@ -291,6 +291,13 @@ def handle_credentials_menu():
             pause()
         elif choice == "4":
             clear_screen()
+            print(Fore.CYAN + "4." + Fore.RESET + f" {emojis.MOVIE} Set Plex Library Name\n")
+            print(
+                Fore.LIGHTBLACK_EX
+                + "Select the library containing your movies."
+                + Fore.RESET
+                + "\n"
+            )
 
             # Try to fetch libraries from Plex to allow selection
             plex_token = config.get("PLEX_TOKEN")
