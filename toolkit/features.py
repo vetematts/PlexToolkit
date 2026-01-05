@@ -207,7 +207,7 @@ def run_studio_mode(tmdb, config, pause_fn):
         )
         print(
             Fore.LIGHTBLACK_EX
-            + "Best for frequently updated lists (e.g. A24, Academy Award Winners)."
+            + "Best for frequently updated lists (e.g. Criterion, Academy Award Winners)."
             + Fore.RESET
             + "\n"
         )
