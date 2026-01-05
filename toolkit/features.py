@@ -130,6 +130,14 @@ def run_studio_mode(tmdb, config, pause_fn):
 
             print(f"\n{emojis.INFO} Scanning Plex library for studios...")
             all_items = library.all()
+            print(
+                Fore.LIGHTBLACK_EX
+                + "This searches the 'Studio' metadata of your existing movies."
+                + Fore.RESET
+            )
+            print(
+                Fore.LIGHTBLACK_EX + "Examples: 'Lucasfilm', 'A24', 'Warner Bros'" + Fore.RESET
+            )
             studio_query = read_line(
                 "\nEnter Studio Name (partial match allowed) (Esc to cancel): "
             )
