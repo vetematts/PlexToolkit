@@ -29,10 +29,17 @@ class InputHandler:
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
         try:
-            tty.setraw(fd)
+            # Use setcbreak instead of setraw. This disables line buffering (so we get chars immediately)
+            # but keeps signal handling (Ctrl+C) and output processing (newlines work normally).
+            tty.setcbreak(fd)
+
             # Use os.read to bypass Python's buffering, which causes select() to fail
             # when data is already buffered in Python but not in the OS pipe.
-            b = os.read(fd, 1)
+            try:
+                b = os.read(fd, 1)
+            except KeyboardInterrupt:
+                return "\x03"  # Return Ctrl+C character
+
             if not b:
                 return ""
 
@@ -71,6 +78,8 @@ class InputHandler:
         Reads a line of input, supporting:
         - Typing text
         - Left/Right Arrow keys for navigation
+        - Option+Left/Right (Word skip)
+        - Home/End (Ctrl+A/E)
         - Backspace
         - Esc to cancel (returns None)
         - Enter to confirm
@@ -83,6 +92,11 @@ class InputHandler:
 
         while True:
             key = InputHandler._get_char()
+
+            # Handle Ctrl+C
+            if key == "\x03":
+                sys.stdout.write("\n")
+                return None
 
             # Handle ESC (Standalone)
             if key == "\x1b":
@@ -100,10 +114,8 @@ class InputHandler:
                     buffer.pop(cursor_pos - 1)
                     cursor_pos -= 1
                     # Move back, clear to end of line, print rest
-                    sys.stdout.write("\b\033[K" + "".join(buffer[cursor_pos:]))
-                    # Move cursor back to correct position if needed
-                    if len(buffer) > cursor_pos:
-                        sys.stdout.write(f"\033[{len(buffer) - cursor_pos}D")
+                    tail = "".join(buffer[cursor_pos:])
+                    sys.stdout.write("\b" + tail + " " + "\b" * (len(tail) + 1))
                     sys.stdout.flush()
                 continue
 
@@ -123,14 +135,62 @@ class InputHandler:
                 # Ignore Up/Down (A/B)
                 continue
 
+            # Handle Option+Left (Esc b) - Word Left
+            if key == "\x1bb":
+                while cursor_pos > 0 and buffer[cursor_pos - 1] == " ":
+                    cursor_pos -= 1
+                    sys.stdout.write("\033[D")
+                while cursor_pos > 0 and buffer[cursor_pos - 1] != " ":
+                    cursor_pos -= 1
+                    sys.stdout.write("\033[D")
+                sys.stdout.flush()
+                continue
+
+            # Handle Option+Right (Esc f) - Word Right
+            if key == "\x1bf":
+                while cursor_pos < len(buffer) and buffer[cursor_pos] != " ":
+                    cursor_pos += 1
+                    sys.stdout.write("\033[C")
+                while cursor_pos < len(buffer) and buffer[cursor_pos] == " ":
+                    cursor_pos += 1
+                    sys.stdout.write("\033[C")
+                sys.stdout.flush()
+                continue
+
+            # Handle Home (Ctrl+A)
+            if key == "\x01":
+                if cursor_pos > 0:
+                    sys.stdout.write(f"\033[{cursor_pos}D")
+                    cursor_pos = 0
+                    sys.stdout.flush()
+                continue
+
+            # Handle End (Ctrl+E)
+            if key == "\x05":
+                if cursor_pos < len(buffer):
+                    sys.stdout.write(f"\033[{len(buffer) - cursor_pos}C")
+                    cursor_pos = len(buffer)
+                    sys.stdout.flush()
+                continue
+
+            # Handle Clear Line (Ctrl+U)
+            if key == "\x15":
+                if cursor_pos > 0:
+                    sys.stdout.write(f"\033[{cursor_pos}D")
+                sys.stdout.write("\033[K")
+                buffer = []
+                cursor_pos = 0
+                sys.stdout.flush()
+                continue
+
             # Handle Regular Printable Characters
             if len(key) == 1 and key.isprintable():
                 buffer.insert(cursor_pos, key)
                 cursor_pos += 1
-                sys.stdout.write(key + "".join(buffer[cursor_pos:]))
-                # Move cursor back if we inserted in middle
-                if len(buffer) > cursor_pos:
-                    sys.stdout.write(f"\033[{len(buffer) - cursor_pos}D")
+                tail = "".join(buffer[cursor_pos:])
+                sys.stdout.write(key + tail)
+                if tail:
+                    sys.stdout.write(f"\033[{len(tail)}D")
                 sys.stdout.flush()
 
     @staticmethod
@@ -139,7 +199,7 @@ class InputHandler:
         sys.stdout.flush()
         while True:
             key = InputHandler._get_char()
-            if key == "\x1b":
+            if key == "\x1b" or key == "\x03":
                 sys.stdout.write("\n")
                 return "ESC"
             if key in valid_choices:
