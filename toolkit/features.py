@@ -168,7 +168,9 @@ def run_studio_mode(tmdb, config, pause_fn):
                     keyword_id=studio_info.get("keyword"),
                 )
             except Exception as e:
-                print(Fore.RED + f"{emojis.CROSS} Error retrieving movies from TMDb: {e}")
+                print(
+                    Fore.RED + f"{emojis.CROSS} Error retrieving movies from TMDb: {e}"
+                )
                 pause_fn()
                 return None, None, False
 

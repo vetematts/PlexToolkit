@@ -274,13 +274,20 @@ def handle_credentials_menu():
             pause()
         elif choice == "3":
             clear_screen()
-            print(Fore.BLUE + "3." + Fore.RESET + f" {emojis.CLAPPER} Set TMDb API Key\n")
+            print(
+                Fore.BLUE + "3." + Fore.RESET + f" {emojis.CLAPPER} Set TMDb API Key\n"
+            )
             print(
                 Fore.LIGHTBLACK_EX
                 + "You can generate an API Key in your account settings:"
                 + Fore.RESET
             )
-            print(Fore.BLUE + "https://www.themoviedb.org/settings/api" + Fore.RESET + "\n")
+            print(
+                Fore.BLUE
+                + "https://www.themoviedb.org/settings/api"
+                + Fore.RESET
+                + "\n"
+            )
             new_key = read_line("Enter new TMDb API Key (Esc to cancel): ")
             if new_key is None:
                 continue
@@ -291,7 +298,12 @@ def handle_credentials_menu():
             pause()
         elif choice == "4":
             clear_screen()
-            print(Fore.CYAN + "4." + Fore.RESET + f" {emojis.MOVIE} Set Plex Library Name\n")
+            print(
+                Fore.CYAN
+                + "4."
+                + Fore.RESET
+                + f" {emojis.MOVIE} Set Plex Library Name\n"
+            )
             print(
                 Fore.LIGHTBLACK_EX
                 + "Select the library containing your movies."
