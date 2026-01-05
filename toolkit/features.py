@@ -193,7 +193,12 @@ def run_studio_mode(tmdb, config, pause_fn):
     # Option 2: Wikipedia (Moved from mode 3)
     if mode == "2":
         clear_screen()
-        print(Fore.GREEN + "2." + Fore.RESET + f" {emojis.BOOK} Import from Web List (Wikipedia)\n")
+        print(
+            Fore.GREEN
+            + "2."
+            + Fore.RESET
+            + f" {emojis.BOOK} Import from Web List (Wikipedia)\n"
+        )
         print_grid(
             constants.WIKIPEDIA_URLS.keys(),
             columns=2,
@@ -222,7 +227,12 @@ def run_studio_mode(tmdb, config, pause_fn):
     # Option 3: Plex Native (Moved from mode 1)
     if mode == "3":
         clear_screen()
-        print(Fore.GREEN + "3." + Fore.RESET + f" {emojis.MOVIE} Search Local Plex Library\n")
+        print(
+            Fore.GREEN
+            + "3."
+            + Fore.RESET
+            + f" {emojis.MOVIE} Search Local Plex Library\n"
+        )
         try:
             pm = PlexManager(config.get("PLEX_TOKEN"), config.get("PLEX_URL"))
             library = pm.get_movie_library(config.get("PLEX_LIBRARY", "Movies"))
