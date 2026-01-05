@@ -19,6 +19,12 @@ def run_manual_mode(pause_fn):
     clear_screen()
     print()
     print(Fore.YELLOW + f"{emojis.MANUAL} Manual Entry\n")
+    print(
+        Fore.LIGHTBLACK_EX
+        + "Create a custom collection by manually typing a list of movie titles."
+        + Fore.RESET
+        + "\n"
+    )
     collection_name = read_line(
         Fore.LIGHTBLACK_EX
         + "Enter a name for your new collection (Esc to cancel): "
