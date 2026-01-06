@@ -133,6 +133,16 @@ def process_and_create_collection(
                 + f"\n{emojis.INFO} Collection '{collection_name}' already exists."
                 + Fore.RESET
             )
+
+            # Check if existing is smart or static for better context
+            is_smart = getattr(existing[0], "smart", False)
+            type_label = "Smart" if is_smart else "Static"
+            print(
+                Fore.LIGHTBLACK_EX
+                + f"The existing collection is {type_label}. You cannot append a Smart rule to it."
+                + Fore.RESET
+            )
+
             confirm = read_line("Overwrite existing collection? (y/n): ")
             if confirm and confirm.lower() == "y":
                 print(f"Deleting '{collection_name}'...")
@@ -144,6 +154,9 @@ def process_and_create_collection(
 
         try:
             library.createSmartCollection(collection_name, **smart_filter)
+            print(
+                f"\n{emojis.CHECK} Smart Collection '{collection_name}' created successfully!"
+            )
             print(f"\n{emojis.CHECK} Smart Collection '{collection_name}' created successfully!")
         except Exception as e:
             print(Fore.RED + f"\n{emojis.CROSS} Failed to create Smart Collection: {e}")

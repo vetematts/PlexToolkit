@@ -425,8 +425,8 @@ def run_collection_builder():
             collection_name, titles = features.run_franchise_mode(tmdb, pause)
 
         elif mode == "2":
-            collection_name, titles, is_pre_matched, smart_filter = features.run_studio_mode(
-                tmdb, config, pause
+            collection_name, titles, is_pre_matched, smart_filter = (
+                features.run_studio_mode(tmdb, config, pause)
             )
 
         elif mode == "3":
