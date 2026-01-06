@@ -7,6 +7,7 @@ This script uses:
 import os
 import json
 import sys
+import time
 
 # Explicitly add the current directory to sys.path to ensure 'toolkit' is found
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -28,6 +29,12 @@ from toolkit.utils import (
     clear_screen,
 )
 from toolkit.input_handler import InputHandler
+
+# Try to import plexapi for version checking
+try:
+    import plexapi
+except ImportError:
+    plexapi = None
 
 # Use the robust input handler that supports Arrow keys and Esc
 read_line = InputHandler.read_line
@@ -125,6 +132,30 @@ def welcome():
     print()
     print_plex_logo_ascii()
     print(PLEX_YELLOW + f"\n{emojis.MOVIE} Welcome to the Plex Toolkit!\n")
+
+
+def check_system_requirements():
+    """Checks for dependency versions and warns if outdated."""
+    if not plexapi:
+        return
+
+    try:
+        # Check plexapi for Smart Collection support (Requires >= 4.15.0)
+        parts = plexapi.__version__.split(".")
+        if len(parts) >= 2:
+            major, minor = int(parts[0]), int(parts[1])
+            if major < 4 or (major == 4 and minor < 15):
+                print(
+                    Fore.YELLOW
+                    + f"{emojis.INFO} Warning: 'plexapi' is outdated ({plexapi.__version__})."
+                )
+                print(
+                    "   Smart Collections require v4.15.0+. Run 'pip install --upgrade plexapi' to update.\n"
+                    + Fore.RESET
+                )
+                time.sleep(2)
+    except Exception:
+        pass
 
 
 def check_credentials():
@@ -412,6 +443,7 @@ def run_collection_builder():
         titles = []
         collection_name = None
         is_pre_matched = False
+        smart_filter = None
 
         # Prepare TMDb helper if key present
         tmdb = (
@@ -424,8 +456,8 @@ def run_collection_builder():
             collection_name, titles = features.run_franchise_mode(tmdb, pause)
 
         elif mode == "2":
-            collection_name, titles, is_pre_matched = features.run_studio_mode(
-                tmdb, config, pause
+            collection_name, titles, is_pre_matched, smart_filter = (
+                features.run_studio_mode(tmdb, config, pause)
             )
 
         elif mode == "3":
@@ -439,9 +471,15 @@ def run_collection_builder():
             continue
 
         ops.process_and_create_collection(
-            collection_name, titles, config, pause, is_pre_matched=is_pre_matched
+            collection_name,
+            titles,
+            config,
+            pause,
+            is_pre_matched=is_pre_matched,
+            smart_filter=smart_filter,
         )
 
 
 if __name__ == "__main__":
+    check_system_requirements()
     run_collection_builder()

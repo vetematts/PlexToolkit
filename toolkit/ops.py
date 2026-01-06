@@ -1,4 +1,6 @@
 import difflib
+import requests
+from urllib.parse import urlencode
 from colorama import Fore
 from toolkit import emojis
 from toolkit.services.plex_manager import PlexManager
@@ -6,6 +8,7 @@ from toolkit.utils import (
     extract_title_and_year,
     normalize_title,
     read_index_or_skip,
+    print_grid,
     read_line,
     read_menu_choice,
     UserAbort,
@@ -100,7 +103,7 @@ def pick_plex_match(raw_title: str, results):
 
 
 def process_and_create_collection(
-    collection_name, items, config, pause_fn, is_pre_matched=False
+    collection_name, items, config, pause_fn, is_pre_matched=False, smart_filter=None
 ):
     """Connects to Plex, finds movies, and creates the collection."""
     plex_token = config.get("PLEX_TOKEN")
@@ -120,6 +123,117 @@ def process_and_create_collection(
         print(Fore.RED + f"\n{emojis.CROSS} Could not connect to Plex: {e}")
         pause_fn()
         return
+
+    # --- Smart Collection Logic ---
+    if smart_filter:
+        print(f"\n{emojis.INFO} Creating Smart Collection: {smart_filter}")
+        # Check if it exists
+        existing = library.search(title=collection_name, libtype="collection")
+        if existing:
+            print(
+                Fore.YELLOW
+                + f"\n{emojis.INFO} Collection '{collection_name}' already exists."
+                + Fore.RESET
+            )
+
+            # Check if existing is smart or static for better context
+            is_smart = getattr(existing[0], "smart", False)
+            type_label = "Smart" if is_smart else "Static"
+            print(
+                Fore.LIGHTBLACK_EX
+                + f"The existing collection is {type_label}. You cannot append a Smart rule to it."
+                + Fore.RESET
+            )
+
+            confirm = read_line("Overwrite existing collection? (y/n): ")
+            if confirm and confirm.lower() == "y":
+                print(Fore.YELLOW + f"Deleting '{collection_name}'..." + Fore.RESET)
+                existing[0].delete()
+            else:
+                print("Canceled.")
+                pause_fn()
+                return
+
+        try:
+            library.createSmartCollection(collection_name, **smart_filter)
+            print(
+                f"\n{emojis.CHECK} Smart Collection '{collection_name}' created successfully!"
+            )
+            pause_fn()
+            return
+        except AttributeError as e:
+            if "createSmartCollection" in str(e):
+                print(
+                    Fore.YELLOW
+                    + f"\n{emojis.INFO} 'plexapi' is outdated. Attempting fallback method..."
+                    + Fore.RESET
+                )
+                try:
+                    # Fallback: Manual API call for older plexapi versions
+                    server = library._server
+                    section_id = library.key
+
+                    # Prepare filter params (ensure type=1 for movies)
+                    filter_params = {"type": 1}
+                    filter_params.update(smart_filter)
+
+                    # Construct the internal URI for the filter
+                    # path: /library/sections/{id}/all
+                    path = f"/library/sections/{section_id}/all"
+                    query = urlencode(filter_params)
+                    uri_path = f"{path}?{query}"
+
+                    # Full server:// URI
+                    server_uri = f"server://{server.machineIdentifier}/com.plexapp.plugins.library{uri_path}"
+
+                    # Create collection params
+                    create_params = {
+                        "title": collection_name,
+                        "smart": 1,
+                        "sectionId": section_id,
+                        "type": 1,
+                        "uri": server_uri,
+                    }
+
+                    url = server.url("/library/collections")
+                    res = requests.post(
+                        url, headers=server._headers(), params=create_params
+                    )
+
+                    if res.status_code >= 400:
+                        raise Exception(f"HTTP {res.status_code}")
+
+                    print(
+                        f"\n{emojis.CHECK} Smart Collection '{collection_name}' created successfully (Fallback)!"
+                    )
+                    pause_fn()
+                    return
+                except Exception as fallback_error:
+                    print(
+                        Fore.RED + f"\n{emojis.CROSS} Fallback failed: {fallback_error}"
+                    )
+                    print(Fore.RED + "Please run: pip install --upgrade plexapi")
+
+                fallback = read_line(
+                    Fore.YELLOW
+                    + "\nCreate a standard (static) collection instead? (y/n): "
+                    + Fore.RESET
+                )
+                if not fallback or fallback.lower() != "y":
+                    pause_fn()
+                    return
+                print(f"\n{emojis.INFO} Proceeding with static collection...")
+            else:
+                print(
+                    Fore.RED
+                    + f"\n{emojis.CROSS} Failed to create Smart Collection: {e}"
+                )
+                pause_fn()
+                return
+        except Exception as e:
+            print(Fore.RED + f"\n{emojis.CROSS} Failed to create Smart Collection: {e}")
+            pause_fn()
+            return
 
     found_movies, not_found, matched_pairs = [], [], []
     seen_rating_keys = set()
@@ -150,6 +264,16 @@ def process_and_create_collection(
             return
 
     print(f"\nFound {len(found_movies)} movies in Plex.")
+
+    if not_found:
+        print(
+            Fore.YELLOW
+            + f"\n{emojis.INFO} Missing {len(not_found)} movies from the list:"
+            + Fore.RESET
+        )
+        # Show the missing movies in a grid
+        print_grid(not_found, columns=2, padding=35)
+
     if not found_movies:
         print(f"{emojis.CROSS} No valid matches found.")
         pause_fn()
@@ -163,48 +287,69 @@ def process_and_create_collection(
     )
 
     if existing_collection:
+        is_smart = getattr(existing_collection, "smart", False)
+        type_label = "Smart" if is_smart else "Static"
         print(
             Fore.YELLOW
-            + f"\n{emojis.INFO} Collection '{existing_collection.title}' already exists."
+            + f"\n{emojis.INFO} Collection '{existing_collection.title}' already exists (Type: {type_label})."
             + Fore.RESET
         )
-        choice = read_menu_choice(
-            "Do you want to (A)ppend, (O)verwrite, or (C)ancel? ", set("aAoOcC")
-        )
+
+        if is_smart:
+            print(
+                Fore.LIGHTBLACK_EX
+                + "You cannot append items to a Smart Collection. You can only overwrite it with a new static collection."
+                + Fore.RESET
+            )
+            choice = read_menu_choice(
+                "Do you want to (O)verwrite, or (C)ancel? ", set("oOcC")
+            )
+        else:
+            choice = read_menu_choice(
+                "Do you want to (A)ppend, (O)verwrite, or (C)ancel? ", set("aAoOcC")
+            )
+
         if choice in ("c", "C", "ESC"):
             print("Canceled.")
             pause_fn()
             return
+
         if choice in ("a", "A"):
-            current_items = existing_collection.items()
-            current_keys = {str(x.ratingKey) for x in current_items}
+            # This block is only reachable for non-smart collections
+            try:
+                current_items = existing_collection.items()
+                current_keys = {str(x.ratingKey) for x in current_items}
 
-            to_add = []
-            skipped = 0
-            for movie in found_movies:
-                if str(movie.ratingKey) not in current_keys:
-                    to_add.append(movie)
+                to_add = []
+                skipped = 0
+                for movie in found_movies:
+                    if str(movie.ratingKey) not in current_keys:
+                        to_add.append(movie)
+                    else:
+                        skipped += 1
+
+                if to_add:
+                    existing_collection.addItems(to_add)
+                    print(
+                        f"\n{emojis.CHECK} Added {len(to_add)} new movies to '{existing_collection.title}'."
+                    )
                 else:
-                    skipped += 1
+                    print(
+                        f"\n{emojis.CHECK} No new movies to add. All items were already in '{existing_collection.title}'."
+                    )
 
-            if to_add:
-                existing_collection.addItems(to_add)
-                print(
-                    f"\n{emojis.CHECK} Added {len(to_add)} new movies to '{existing_collection.title}'."
-                )
-            else:
-                print(
-                    f"\n{emojis.CHECK} No new movies to add. All items were already in '{existing_collection.title}'."
-                )
+                if skipped > 0:
+                    print(
+                        Fore.LIGHTBLACK_EX
+                        + f"{skipped} movies were already in the collection."
+                        + Fore.RESET
+                    )
+            except Exception as e:
+                print(Fore.RED + f"\n{emojis.CROSS} Failed to append items: {e}")
+            finally:
+                pause_fn()
+                return
 
-            if skipped > 0:
-                print(
-                    Fore.LIGHTBLACK_EX
-                    + f"{skipped} movies were already in the collection."
-                    + Fore.RESET
-                )
-            pause_fn()
-            return
         if choice in ("o", "O"):
             print(
                 Fore.YELLOW

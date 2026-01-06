@@ -1,4 +1,4 @@
-plexapi
+plexapi>=4.15.0
 tmdbv3api
 colorama
 requests
