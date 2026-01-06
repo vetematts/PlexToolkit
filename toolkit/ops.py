@@ -6,6 +6,7 @@ from toolkit.utils import (
     extract_title_and_year,
     normalize_title,
     read_index_or_skip,
+    print_grid,
     read_line,
     read_menu_choice,
     UserAbort,
@@ -150,6 +151,16 @@ def process_and_create_collection(
             return
 
     print(f"\nFound {len(found_movies)} movies in Plex.")
+
+    if not_found:
+        print(
+            Fore.YELLOW
+            + f"\n{emojis.INFO} Missing {len(not_found)} movies from the list:"
+            + Fore.RESET
+        )
+        # Show the missing movies in a grid
+        print_grid(not_found, columns=2, padding=35)
+
     if not found_movies:
         print(f"{emojis.CROSS} No valid matches found.")
         pause_fn()

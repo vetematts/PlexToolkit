@@ -368,7 +368,7 @@ def run_poster_tool(config, pause_fn):
         items_to_process = []
         if choice == "1":
             print(f"\n{emojis.INFO} Fetching collections from Plex...")
-            col_names = [c.title for c in library.collections()]
+            col_names = sorted([c.title for c in library.collections()])
             if not col_names:
                 print(Fore.YELLOW + "No collections found.")
                 pause_fn()
