@@ -145,7 +145,11 @@ def process_and_create_collection(
 
             confirm = read_line("Overwrite existing collection? (y/n): ")
             if confirm and confirm.lower() == "y":
-                print(Fore.YELLOW + f"Deleting '{collection_name}'..." + Fore.RESET)
+                print(
+                    Fore.YELLOW
+                    + f"Deleting '{collection_name}'..."
+                    + Fore.RESET
+                )
                 existing[0].delete()
             else:
                 print("Canceled.")
@@ -154,9 +158,9 @@ def process_and_create_collection(
 
         try:
             library.createSmartCollection(collection_name, **smart_filter)
-            print(
-                f"\n{emojis.CHECK} Smart Collection '{collection_name}' created successfully!"
-            )
+            print(f"\n{emojis.CHECK} Smart Collection '{collection_name}' created successfully!")
+            pause_fn()
+            return
         except AttributeError as e:
             if "createSmartCollection" in str(e):
                 print(
@@ -164,15 +168,24 @@ def process_and_create_collection(
                     + f"\n{emojis.CROSS} Failed: The installed 'plexapi' library is too old to support Smart Collections."
                 )
                 print(Fore.RED + "Please run: pip install --upgrade plexapi")
-            else:
-                print(
-                    Fore.RED
-                    + f"\n{emojis.CROSS} Failed to create Smart Collection: {e}"
+
+                fallback = read_line(
+                    Fore.YELLOW
+                    + "\nCreate a standard (static) collection instead? (y/n): "
+                    + Fore.RESET
                 )
+                if not fallback or fallback.lower() != "y":
+                    pause_fn()
+                    return
+                print(f"\n{emojis.INFO} Proceeding with static collection...")
+            else:
+                print(Fore.RED + f"\n{emojis.CROSS} Failed to create Smart Collection: {e}")
+                pause_fn()
+                return
         except Exception as e:
             print(Fore.RED + f"\n{emojis.CROSS} Failed to create Smart Collection: {e}")
-        pause_fn()
-        return
+            pause_fn()
+            return
 
     found_movies, not_found, matched_pairs = [], [], []
     seen_rating_keys = set()
