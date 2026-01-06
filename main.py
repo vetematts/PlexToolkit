@@ -412,6 +412,7 @@ def run_collection_builder():
         titles = []
         collection_name = None
         is_pre_matched = False
+        smart_filter = None
 
         # Prepare TMDb helper if key present
         tmdb = (
@@ -424,7 +425,7 @@ def run_collection_builder():
             collection_name, titles = features.run_franchise_mode(tmdb, pause)
 
         elif mode == "2":
-            collection_name, titles, is_pre_matched = features.run_studio_mode(
+            collection_name, titles, is_pre_matched, smart_filter = features.run_studio_mode(
                 tmdb, config, pause
             )
 
@@ -439,7 +440,12 @@ def run_collection_builder():
             continue
 
         ops.process_and_create_collection(
-            collection_name, titles, config, pause, is_pre_matched=is_pre_matched
+            collection_name,
+            titles,
+            config,
+            pause,
+            is_pre_matched=is_pre_matched,
+            smart_filter=smart_filter,
         )
 
 

@@ -101,7 +101,7 @@ def pick_plex_match(raw_title: str, results):
 
 
 def process_and_create_collection(
-    collection_name, items, config, pause_fn, is_pre_matched=False
+    collection_name, items, config, pause_fn, is_pre_matched=False, smart_filter=None
 ):
     """Connects to Plex, finds movies, and creates the collection."""
     plex_token = config.get("PLEX_TOKEN")
@@ -119,6 +119,34 @@ def process_and_create_collection(
             raise ConnectionError(f"Movie library '{library_name}' not found.")
     except Exception as e:
         print(Fore.RED + f"\n{emojis.CROSS} Could not connect to Plex: {e}")
+        pause_fn()
+        return
+
+    # --- Smart Collection Logic ---
+    if smart_filter:
+        print(f"\n{emojis.INFO} Creating Smart Collection: {smart_filter}")
+        # Check if it exists
+        existing = library.search(title=collection_name, libtype="collection")
+        if existing:
+            print(
+                Fore.YELLOW
+                + f"\n{emojis.INFO} Collection '{collection_name}' already exists."
+                + Fore.RESET
+            )
+            confirm = read_line("Overwrite existing collection? (y/n): ")
+            if confirm and confirm.lower() == "y":
+                print(f"Deleting '{collection_name}'...")
+                existing[0].delete()
+            else:
+                print("Canceled.")
+                pause_fn()
+                return
+
+        try:
+            library.createSmartCollection(collection_name, **smart_filter)
+            print(f"\n{emojis.CHECK} Smart Collection '{collection_name}' created successfully!")
+        except Exception as e:
+            print(Fore.RED + f"\n{emojis.CROSS} Failed to create Smart Collection: {e}")
         pause_fn()
         return
 

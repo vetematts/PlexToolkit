@@ -144,7 +144,7 @@ def run_studio_mode(tmdb, config, pause_fn):
         "Select a method (Esc to cancel): ", set("1234") if bs4_avail else set("134")
     )
     if mode == "ESC" or mode is None:
-        return None, None, False
+        return None, None, False, None
 
     # Option 1: TMDb (Moved from end of function)
     if mode == "1":
@@ -168,7 +168,7 @@ def run_studio_mode(tmdb, config, pause_fn):
                 studios_data.keys(),
             )
             if choice is None:
-                return None, None, False
+                return None, None, False, None
             titles = studios_data.get(choice, [])
         else:
             pretty_names = [
@@ -186,7 +186,7 @@ def run_studio_mode(tmdb, config, pause_fn):
                 pretty_names,
             )
             if choice_pretty is None:
-                return None, None, False
+                return None, None, False, None
 
             studio_info = constants.STUDIO_MAP[choice_pretty.lower()]
             try:
@@ -199,14 +199,14 @@ def run_studio_mode(tmdb, config, pause_fn):
                     Fore.RED + f"{emojis.CROSS} Error retrieving movies from TMDb: {e}"
                 )
                 pause_fn()
-                return None, None, False
+                return None, None, False, None
 
         collection_name = read_line(
             "Enter a name for your new collection (Esc to cancel): "
         )
         if collection_name is None:
-            return None, None, False
-        return collection_name.strip(), titles, False
+            return None, None, False, None
+        return collection_name.strip(), titles, False, None
 
     # Option 2: Wikipedia (Moved from mode 3)
     if mode == "2":
@@ -234,19 +234,19 @@ def run_studio_mode(tmdb, config, pause_fn):
             constants.WIKIPEDIA_URLS.keys(),
         )
         if choice is None:
-            return None, None, False
+            return None, None, False, None
 
         titles = scraper.scrape_wikipedia_film_list(constants.WIKIPEDIA_URLS[choice])
         if not titles:
             pause_fn()
-            return None, None, False
+            return None, None, False, None
 
         collection_name = read_line(
             f"Enter a name for your new collection (Default: {choice}): "
         )
         if not collection_name or not collection_name.strip():
             collection_name = choice
-        return collection_name.strip(), titles, False
+        return collection_name.strip(), titles, False, None
 
     # Option 3: Plex Native (Moved from mode 1)
     if mode == "3":
@@ -261,7 +261,7 @@ def run_studio_mode(tmdb, config, pause_fn):
             pm = PlexManager(config.get("PLEX_TOKEN"), config.get("PLEX_URL"))
             library = pm.get_movie_library(config.get("PLEX_LIBRARY", "Movies"))
             if not library:
-                return None, None, False
+                return None, None, False, None
 
             print(f"\n{emojis.INFO} Scanning Plex library for studios...")
             all_items = library.all()
@@ -290,7 +290,7 @@ def run_studio_mode(tmdb, config, pause_fn):
                 "\nEnter Studio Name (partial match allowed) (Esc to cancel): "
             )
             if not studio_query:
-                return None, None, False
+                return None, None, False, None
 
             print(f"\nFiltering movies for studio '{studio_query}'...")
             items = [
@@ -299,11 +299,20 @@ def run_studio_mode(tmdb, config, pause_fn):
                 if getattr(item, "studio", None)
                 and studio_query.lower() in item.studio.lower()
             ]
-            return studio_query.strip(), items, True
+
+            # Ask for Smart Collection
+            print(f"\nFound {len(items)} movies matching '{studio_query}'.")
+            smart_choice = read_line(
+                f"Create as a {Fore.CYAN}Smart Collection{Fore.RESET} (auto-updates)? (y/n): "
+            )
+            smart_filter = None
+            if smart_choice and smart_choice.lower() == "y":
+                smart_filter = {"studio": studio_query.strip()}
+            return studio_query.strip(), items, True, smart_filter
         except Exception as e:
             print(Fore.RED + f"Error searching Plex: {e}")
             pause_fn()
-            return None, None, False
+            return None, None, False, None
 
     # Option 4: Fallback / Offline
     if mode == "4":
@@ -326,7 +335,7 @@ def run_studio_mode(tmdb, config, pause_fn):
             studios_data.keys(),
         )
         if choice is None:
-            return None, None, False
+            return None, None, False, None
         titles = studios_data.get(choice, [])
 
         collection_name = read_line(
@@ -334,7 +343,7 @@ def run_studio_mode(tmdb, config, pause_fn):
         )
         if not collection_name or not collection_name.strip():
             collection_name = choice
-        return collection_name.strip(), titles, False
+        return collection_name.strip(), titles, False, None
 
 
 def run_poster_tool(config, pause_fn):
