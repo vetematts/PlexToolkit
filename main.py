@@ -386,20 +386,42 @@ def handle_credentials_menu():
             print(Fore.CYAN + f"{emojis.BOOK} Current Configuration:\n")
 
             def _print_kv(emoji, label, value):
-                val_str = str(value) if value else Fore.LIGHTBLACK_EX + "(Not Set)" + Fore.RESET
+                val_str = (
+                    str(value)
+                    if value
+                    else Fore.LIGHTBLACK_EX + "(Not Set)" + Fore.RESET
+                )
                 print(f"{emoji} {Fore.WHITE}{label:<18}{Fore.RESET} : {val_str}")
 
             _print_kv(emojis.KEY, "Plex Token", config.get("PLEX_TOKEN"))
             _print_kv(emojis.URL, "Plex URL", config.get("PLEX_URL"))
             _print_kv(emojis.CLAPPER, "TMDb API Key", config.get("TMDB_API_KEY"))
-            _print_kv(emojis.MOVIE, "Plex Library", config.get("PLEX_LIBRARY") or "Movies")
+            _print_kv(
+                emojis.MOVIE, "Plex Library", config.get("PLEX_LIBRARY") or "Movies"
+            )
 
             print(Fore.LIGHTBLACK_EX + "\n--- Connection Status ---" + Fore.RESET)
             last_plex = config.get("PLEX_LAST_TESTED", "")
             last_tmdb = config.get("TMDB_LAST_TESTED", "")
 
-            _print_kv(emojis.INFO, "Plex Last Tested", (Fore.GREEN + last_plex + Fore.RESET) if last_plex else (Fore.RED + "Never" + Fore.RESET))
-            _print_kv(emojis.INFO, "TMDb Last Tested", (Fore.GREEN + last_tmdb + Fore.RESET) if last_tmdb else (Fore.RED + "Never" + Fore.RESET))
+            _print_kv(
+                emojis.INFO,
+                "Plex Last Tested",
+                (
+                    (Fore.GREEN + last_plex + Fore.RESET)
+                    if last_plex
+                    else (Fore.RED + "Never" + Fore.RESET)
+                ),
+            )
+            _print_kv(
+                emojis.INFO,
+                "TMDb Last Tested",
+                (
+                    (Fore.GREEN + last_tmdb + Fore.RESET)
+                    if last_tmdb
+                    else (Fore.RED + "Never" + Fore.RESET)
+                ),
+            )
 
             pause("\nPress Enter or Esc to return to the credentials menu...")
         else:
