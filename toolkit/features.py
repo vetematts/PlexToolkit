@@ -77,7 +77,7 @@ def _handle_franchise_fallback():
     return collection_name.strip(), titles
 
 
-def _handle_franchise_tmdb(tmdb, pause_fn):
+def _handle_franchise_tmdb(tmdb, pause_fn, skip_naming=False):
     """Handles Franchise Mode Option: TMDb."""
     print_grid(
         constants.KNOWN_FRANCHISES.keys(),
@@ -97,6 +97,9 @@ def _handle_franchise_tmdb(tmdb, pause_fn):
         print(Fore.RED + f"{emojis.CROSS} Error retrieving movies: {e}")
         pause_fn()
         return None, None
+
+    if skip_naming:
+        return choice, titles
 
     collection_name = read_line(
         "Enter a name for your new collection (Esc to cancel): "
@@ -399,6 +402,54 @@ def run_studio_mode(tmdb, config, pause_fn):
     if mode == "4":
         return _handle_fallback_lists()
 
+
+def run_missing_movies_tool(tmdb, config, pause_fn):
+    """Scans a TMDb franchise and reports movies missing from Plex."""
+    clear_screen()
+    print()
+    print(Fore.YELLOW + f"{emojis.FRANCHISE}  Missing Movies Scanner\n")
+    print(
+        Fore.LIGHTBLACK_EX
+        + "Compare a TMDb Franchise against your Plex library to find what you're missing."
+        + Fore.RESET
+        + "\n"
+    )
+
+    if not tmdb:
+        print(Fore.RED + f"{emojis.CROSS} This feature requires a TMDb API Key.")
+        pause_fn()
+        return
+
+    # 1. Get Expected Titles from TMDb
+    # We reuse the franchise selection logic but skip the collection naming part
+    franchise_name, expected_titles = _handle_franchise_tmdb(tmdb, pause_fn, skip_naming=True)
+    if not expected_titles:
+        return
+
+    # 2. Get Current Titles from Plex
+    print(f"\n{emojis.INFO} Scanning Plex library (this may take a moment)...")
+    pm = PlexManager(config.get("PLEX_TOKEN"), config.get("PLEX_URL"))
+    library = pm.get_movie_library(config.get("PLEX_LIBRARY", "Movies"))
+    if not library:
+        pause_fn()
+        return
+
+    # Create a set of normalized Plex titles for fast lookup
+    plex_titles = {m.title.lower().strip() for m in library.all()}
+
+    # 3. Compare
+    missing = [t for t in expected_titles if t.lower().strip() not in plex_titles]
+
+    print(f"\n{emojis.CHECK} Scan complete for '{franchise_name}'.")
+    if not missing:
+        print(Fore.GREEN + "\nGreat news! You have all the movies in this franchise.")
+    else:
+        print(Fore.YELLOW + f"\nYou are missing {len(missing)} movies:\n")
+        for title in missing:
+            print(f" - {title}")
+
+    print()
+    pause_fn()
 
 def _get_items_for_poster_tool(library, choice, pause_fn):
     """Selects items to process based on user choice (Collection vs All)."""

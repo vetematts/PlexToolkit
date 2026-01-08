@@ -192,27 +192,79 @@ def handle_main_menu() -> str:
     )
     print(Fore.GREEN + "3." + Fore.RESET + f" {emojis.MANUAL} Manual Entry\n")
     print(
-        Fore.YELLOW + "4." + Fore.RESET + f" {emojis.ART} Fix Posters & Backgrounds\n"
+        Fore.GREEN + "4." + Fore.RESET + f" {emojis.FRANCHISE} Missing Movies Scanner\n"
+    )
+    print(
+        Fore.YELLOW + "5." + Fore.RESET + f" {emojis.ART} Fix Posters & Backgrounds\n"
     )
     print(
         Fore.YELLOW
-        + "5."
+        + "6."
         + Fore.RESET
         + f" {emojis.CONFIGURE} Settings & Credentials\n"
     )
-    print(Fore.RED + "6." + Fore.RESET + f" {emojis.EXIT} Exit\n")
+    print(Fore.RED + "7." + Fore.RESET + f" {emojis.EXIT} Exit\n")
     print(
         Fore.LIGHTBLACK_EX
         + f"{emojis.INFO}  You can return to this menu after each collection is created.\n"
     )
-    mode = read_menu_choice("Select an option (Esc to exit): ", set("123456"))
+    mode = read_menu_choice("Select an option (Esc to exit): ", set("1234567"))
     if mode == "ESC":
-        return "6"
+        return "7"
     return mode
 
 
 def handle_credentials_menu():
     """Displays and manages the credentials configuration submenu."""
+
+    def pause(msg: str = "Press Enter or Esc to return to the menu..."):
+        read_line(msg)
+
+    def validate_url(url):
+        if not url:
+            print(Fore.RED + f"{emojis.CROSS} Plex URL cannot be empty.\n")
+            return None
+        # Sanitize: remove spaces (common when copying from Plex UI: "IP : Port")
+        url = url.replace(" ", "")
+        # Auto-add http:// if missing
+        if not url.lower().startswith("http://") and not url.lower().startswith(
+            "https://"
+        ):
+            url = "http://" + url
+            print(Fore.YELLOW + f"{emojis.INFO} Auto-formatted URL to: {url}")
+        return url
+
+    def _prompt_update_config(
+        key, prompt, header_text, info_text, validator=None, tester=None
+    ):
+        """Helper to handle the UI flow for updating a config value."""
+        clear_screen()
+        print(header_text + "\n")
+        if info_text:
+            print(Fore.LIGHTBLACK_EX + info_text + Fore.RESET + "\n")
+
+        new_val = read_line(prompt)
+        if new_val is None:
+            return
+
+        new_val = new_val.strip()
+        if validator:
+            new_val = validator(new_val)
+            if new_val is None:  # Validator handles error printing
+                pause()
+                return
+        elif not new_val:
+            print(Fore.RED + f"{emojis.CROSS} Value cannot be empty.\n")
+            pause()
+            return
+
+        config[key] = new_val
+        save_config(config)
+        print(Fore.GREEN + f"{emojis.CHECK} Saved successfully!\n")
+        if tester:
+            tester(config)
+        pause()
+
     while True:
         clear_screen()
         print()
@@ -233,40 +285,6 @@ def handle_credentials_menu():
         print(Fore.RED + "7." + Fore.RESET + f" {emojis.BACK} Return to main menu\n")
         choice = read_menu_choice("Select an option (Esc to go back): ", set("1234567"))
 
-        def pause(msg: str = "Press Enter or Esc to return to the menu..."):
-            read_line(msg)
-
-        def _prompt_update_config(
-            key, prompt, header_text, info_text, validator=None, tester=None
-        ):
-            """Helper to handle the UI flow for updating a config value."""
-            clear_screen()
-            print(header_text + "\n")
-            if info_text:
-                print(Fore.LIGHTBLACK_EX + info_text + Fore.RESET + "\n")
-
-            new_val = read_line(prompt)
-            if new_val is None:
-                return
-
-            new_val = new_val.strip()
-            if validator:
-                new_val = validator(new_val)
-                if new_val is None:  # Validator handles error printing
-                    pause()
-                    return
-            elif not new_val:
-                print(Fore.RED + f"{emojis.CROSS} Value cannot be empty.\n")
-                pause()
-                return
-
-            config[key] = new_val
-            save_config(config)
-            print(Fore.GREEN + f"{emojis.CHECK} Saved successfully!\n")
-            if tester:
-                tester(config)
-            pause()
-
         if choice == "ESC" or choice == "7":
             break
         if choice == "1":
@@ -280,20 +298,6 @@ def handle_credentials_menu():
                 tester=test_plex_connection,
             )
         elif choice == "2":
-
-            def validate_url(url):
-                if not url:
-                    print(Fore.RED + f"{emojis.CROSS} Plex URL cannot be empty.\n")
-                    return None
-                # Sanitize: remove spaces (common when copying from Plex UI: "IP : Port")
-                url = url.replace(" ", "")
-                # Auto-add http:// if missing
-                if not url.lower().startswith("http://") and not url.lower().startswith(
-                    "https://"
-                ):
-                    url = "http://" + url
-                    print(Fore.YELLOW + f"{emojis.INFO} Auto-formatted URL to: {url}")
-                return url
 
             _prompt_update_config(
                 "PLEX_URL",
@@ -441,22 +445,26 @@ def run_collection_builder():
 
         mode = handle_main_menu()
 
-        if mode not in ("1", "2", "3", "4", "5", "6"):
-            print("Invalid selection. Please choose a valid menu option (1-6).")
+        if mode not in ("1", "2", "3", "4", "5", "6", "7"):
+            print("Invalid selection. Please choose a valid menu option (1-7).")
             pause()
             continue
 
-        if mode == "6":
+        if mode == "7":
             print(f"{emojis.WAVE} Goodbye!")
             return
 
         # Tools
         if mode == "4":
+            features.run_missing_movies_tool(tmdb, config, pause)
+            continue
+
+        if mode == "5":
             features.run_poster_tool(config, pause)
             continue
 
         # Credentials settings
-        if mode == "5":
+        if mode == "6":
             handle_credentials_menu()
             continue  # back to main loop
 
