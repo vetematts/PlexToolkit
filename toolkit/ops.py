@@ -193,6 +193,95 @@ def _process_smart_collection(library, collection_name, smart_filter, pause_fn):
     return True  # Indicates smart collection was handled (created or failed with no fallback)
 
 
+def _handle_existing_collection(library, collection_name, found_movies, pause_fn):
+    """
+    Checks if a collection exists and handles user interaction (Append/Overwrite).
+    Returns 'proceed' if the caller should create a new collection (or overwrite).
+    Returns 'stop' if the action is complete (appended) or cancelled.
+    """
+    existing_collections = library.search(title=collection_name, libtype="collection")
+    existing_collection = next(
+        (c for c in existing_collections if c.title.lower() == collection_name.lower()),
+        None,
+    )
+
+    if not existing_collection:
+        return "proceed"
+
+    is_smart = getattr(existing_collection, "smart", False)
+    type_label = "Smart" if is_smart else "Static"
+    print(
+        Fore.YELLOW
+        + f"\n{emojis.INFO} Collection '{existing_collection.title}' already exists (Type: {type_label})."
+        + Fore.RESET
+    )
+
+    if is_smart:
+        print(
+            Fore.LIGHTBLACK_EX
+            + "You cannot append items to a Smart Collection. You can only overwrite it with a new static collection."
+            + Fore.RESET
+        )
+        choice = read_menu_choice(
+            "Do you want to (O)verwrite, or (C)ancel? ", set("oOcC")
+        )
+    else:
+        choice = read_menu_choice(
+            "Do you want to (A)ppend, (O)verwrite, or (C)ancel? ", set("aAoOcC")
+        )
+
+    if choice in ("c", "C", "ESC"):
+        print("Canceled.")
+        pause_fn()
+        return "stop"
+
+    if choice in ("a", "A"):
+        try:
+            current_items = existing_collection.items()
+            current_keys = {str(x.ratingKey) for x in current_items}
+
+            to_add = []
+            skipped = 0
+            for movie in found_movies:
+                if str(movie.ratingKey) not in current_keys:
+                    to_add.append(movie)
+                else:
+                    skipped += 1
+
+            if to_add:
+                existing_collection.addItems(to_add)
+                print(
+                    f"\n{emojis.CHECK} Added {len(to_add)} new movies to '{existing_collection.title}'."
+                )
+            else:
+                print(
+                    f"\n{emojis.CHECK} No new movies to add. All items were already in '{existing_collection.title}'."
+                )
+
+            if skipped > 0:
+                print(
+                    Fore.LIGHTBLACK_EX
+                    + f"{skipped} movies were already in the collection."
+                    + Fore.RESET
+                )
+        except Exception as e:
+            print(Fore.RED + f"\n{emojis.CROSS} Failed to append items: {e}")
+        finally:
+            pause_fn()
+            return "stop"
+
+    if choice in ("o", "O"):
+        print(
+            Fore.YELLOW
+            + f"\n{emojis.INFO} Deleting existing collection '{existing_collection.title}'..."
+            + Fore.RESET
+        )
+        existing_collection.delete()
+        return "proceed"
+
+    return "stop"
+
+
 def process_and_create_collection(
     collection_name, items, config, pause_fn, is_pre_matched=False, smart_filter=None
 ):
@@ -270,85 +359,12 @@ def process_and_create_collection(
         pause_fn()
         return
 
-    # Check if collection exists to prevent duplicates
-    existing_collections = library.search(title=collection_name, libtype="collection")
-    existing_collection = next(
-        (c for c in existing_collections if c.title.lower() == collection_name.lower()),
-        None,
-    )
-
-    if existing_collection:
-        is_smart = getattr(existing_collection, "smart", False)
-        type_label = "Smart" if is_smart else "Static"
-        print(
-            Fore.YELLOW
-            + f"\n{emojis.INFO} Collection '{existing_collection.title}' already exists (Type: {type_label})."
-            + Fore.RESET
-        )
-
-        if is_smart:
-            print(
-                Fore.LIGHTBLACK_EX
-                + "You cannot append items to a Smart Collection. You can only overwrite it with a new static collection."
-                + Fore.RESET
-            )
-            choice = read_menu_choice(
-                "Do you want to (O)verwrite, or (C)ancel? ", set("oOcC")
-            )
-        else:
-            choice = read_menu_choice(
-                "Do you want to (A)ppend, (O)verwrite, or (C)ancel? ", set("aAoOcC")
-            )
-
-        if choice in ("c", "C", "ESC"):
-            print("Canceled.")
-            pause_fn()
-            return
-
-        if choice in ("a", "A"):
-            # This block is only reachable for non-smart collections
-            try:
-                current_items = existing_collection.items()
-                current_keys = {str(x.ratingKey) for x in current_items}
-
-                to_add = []
-                skipped = 0
-                for movie in found_movies:
-                    if str(movie.ratingKey) not in current_keys:
-                        to_add.append(movie)
-                    else:
-                        skipped += 1
-
-                if to_add:
-                    existing_collection.addItems(to_add)
-                    print(
-                        f"\n{emojis.CHECK} Added {len(to_add)} new movies to '{existing_collection.title}'."
-                    )
-                else:
-                    print(
-                        f"\n{emojis.CHECK} No new movies to add. All items were already in '{existing_collection.title}'."
-                    )
-
-                if skipped > 0:
-                    print(
-                        Fore.LIGHTBLACK_EX
-                        + f"{skipped} movies were already in the collection."
-                        + Fore.RESET
-                    )
-            except Exception as e:
-                print(Fore.RED + f"\n{emojis.CROSS} Failed to append items: {e}")
-            finally:
-                pause_fn()
-                return
-
-        if choice in ("o", "O"):
-            print(
-                Fore.YELLOW
-                + f"\n{emojis.INFO} Deleting existing collection '{existing_collection.title}'..."
-                + Fore.RESET
-            )
-            existing_collection.delete()
-    else:
+    # Handle existing collections (Append/Overwrite/Cancel)
+    action = _handle_existing_collection(library, collection_name, found_movies, pause_fn)
+    if action == "stop":
+        return
+    elif action == "proceed":
+        # If proceeding (and not overwriting), ask for final confirmation
         confirm = read_line("Proceed to create collection with these movies? (y/n): ")
         if not confirm or confirm.strip().lower() != "y":
             print(Fore.RED + f"\n{emojis.CROSS} Aborted.")

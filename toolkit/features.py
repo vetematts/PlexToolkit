@@ -49,59 +49,74 @@ def run_manual_mode(pause_fn):
     return collection_name, titles
 
 
-def run_franchise_mode(tmdb, pause_fn):
-    """Handles the franchise/series mode."""
-    clear_screen()
-    print()
-    print(Fore.YELLOW + f"{emojis.FRANCHISE}  Franchise / Series Mode")
-    titles = []
-
-    if not tmdb:
-        print(
-            Fore.RED
-            + f"\n{emojis.CROSS} TMDb API key not provided. Using fallback data.\n"
-        )
-        franchises_data = load_fallback_data("Franchises")
-        print_grid(
-            franchises_data.keys(),
-            columns=3,
-            padding=28,
-            title=Fore.GREEN + "Available Franchises:",
-        )
-        choice = pick_from_list_case_insensitive(
-            "\n" + Fore.LIGHTBLACK_EX + "Select a franchise (Esc to cancel): ",
-            franchises_data.keys(),
-        )
-        if choice is None:
-            return None, None
-        titles = franchises_data[choice]
-    else:
-        print_grid(
-            constants.KNOWN_FRANCHISES.keys(),
-            columns=3,
-            padding=28,
-            title=Fore.GREEN + "\nAvailable Collections (TMDb):",
-        )
-        choice = pick_from_list_case_insensitive(
-            "\n" + Fore.LIGHTBLACK_EX + "Select a franchise (Esc to cancel): ",
-            constants.KNOWN_FRANCHISES.keys(),
-        )
-        if choice is None:
-            return None, None
-        try:
-            titles = tmdb.get_movies_from_collection(constants.KNOWN_FRANCHISES[choice])
-        except Exception as e:
-            print(Fore.RED + f"{emojis.CROSS} Error retrieving movies: {e}")
-            pause_fn()
-            return None, None
+def _handle_franchise_fallback():
+    """Handles Franchise Mode Option: Offline Fallback."""
+    print(
+        Fore.RED
+        + f"\n{emojis.CROSS} TMDb API key not provided. Using fallback data.\n"
+    )
+    franchises_data = load_fallback_data("Franchises")
+    print_grid(
+        franchises_data.keys(),
+        columns=3,
+        padding=28,
+        title=Fore.GREEN + "Available Franchises:",
+    )
+    choice = pick_from_list_case_insensitive(
+        "\n" + Fore.LIGHTBLACK_EX + "Select a franchise (Esc to cancel): ",
+        franchises_data.keys(),
+    )
+    if choice is None:
+        return None, None
+    titles = franchises_data[choice]
 
     collection_name = read_line(
         "Enter a name for your new collection (Esc to cancel): "
     )
     if collection_name is None:
         return None, None
-
     return collection_name.strip(), titles
+
+
+def _handle_franchise_tmdb(tmdb, pause_fn):
+    """Handles Franchise Mode Option: TMDb."""
+    print_grid(
+        constants.KNOWN_FRANCHISES.keys(),
+        columns=3,
+        padding=28,
+        title=Fore.GREEN + "\nAvailable Collections (TMDb):",
+    )
+    choice = pick_from_list_case_insensitive(
+        "\n" + Fore.LIGHTBLACK_EX + "Select a franchise (Esc to cancel): ",
+        constants.KNOWN_FRANCHISES.keys(),
+    )
+    if choice is None:
+        return None, None
+    try:
+        titles = tmdb.get_movies_from_collection(constants.KNOWN_FRANCHISES[choice])
+    except Exception as e:
+        print(Fore.RED + f"{emojis.CROSS} Error retrieving movies: {e}")
+        pause_fn()
+        return None, None
+
+    collection_name = read_line(
+        "Enter a name for your new collection (Esc to cancel): "
+    )
+    if collection_name is None:
+        return None, None
+    return collection_name.strip(), titles
+
+
+def run_franchise_mode(tmdb, pause_fn):
+    """Handles the franchise/series mode."""
+    clear_screen()
+    print()
+    print(Fore.YELLOW + f"{emojis.FRANCHISE}  Franchise / Series Mode")
+
+    if not tmdb:
+        return _handle_franchise_fallback()
+    else:
+        return _handle_franchise_tmdb(tmdb, pause_fn)
 
 
 def _handle_tmdb_discovery(tmdb, pause_fn):
