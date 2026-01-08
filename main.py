@@ -384,12 +384,23 @@ def handle_credentials_menu():
         elif choice == "6":
             clear_screen()
             print(Fore.CYAN + f"{emojis.BOOK} Current Configuration:\n")
-            print(json.dumps(config, indent=4))
+
+            def _print_kv(label, value):
+                val_str = str(value) if value else Fore.LIGHTBLACK_EX + "(Not Set)" + Fore.RESET
+                print(f"{Fore.WHITE}{label:<18}{Fore.RESET} : {val_str}")
+
+            _print_kv("Plex URL", config.get("PLEX_URL"))
+            _print_kv("Plex Token", config.get("PLEX_TOKEN"))
+            _print_kv("TMDb API Key", config.get("TMDB_API_KEY"))
+            _print_kv("Plex Library", config.get("PLEX_LIBRARY") or "Movies")
+
+            print(Fore.LIGHTBLACK_EX + "\n--- Connection Status ---" + Fore.RESET)
             last_plex = config.get("PLEX_LAST_TESTED", "")
             last_tmdb = config.get("TMDB_LAST_TESTED", "")
-            print("\nConnection status:")
-            print(f"- Plex last tested: {last_plex or 'never'}")
-            print(f"- TMDb last tested: {last_tmdb or 'never'}")
+
+            _print_kv("Plex Last Tested", (Fore.GREEN + last_plex + Fore.RESET) if last_plex else (Fore.RED + "Never" + Fore.RESET))
+            _print_kv("TMDb Last Tested", (Fore.GREEN + last_tmdb + Fore.RESET) if last_tmdb else (Fore.RED + "Never" + Fore.RESET))
+
             pause("\nPress Enter or Esc to return to the credentials menu...")
         else:
             print("Invalid choice. Try again.")
