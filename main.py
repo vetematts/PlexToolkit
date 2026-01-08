@@ -240,93 +240,48 @@ def handle_credentials_menu():
         if choice == "ESC" or choice == "7":
             break
         if choice == "1":
-            clear_screen()
-            print(Fore.YELLOW + "1." + Fore.RESET + f" {emojis.KEY} Set Plex Token\n")
-            print(
-                Fore.LIGHTBLACK_EX
-                + "To find your token, view the XML of any item on Plex Web:"
-                + Fore.RESET
+            _prompt_update_config(
+                "PLEX_TOKEN",
+                "Enter new Plex Token (Esc to cancel): ",
+                Fore.YELLOW + "1." + Fore.RESET + f" {emojis.KEY} Set Plex Token",
+                "To find your token, view the XML of any item on Plex Web:\n"
+                + Fore.BLUE
+                + "https://app.plex.tv",
+                tester=test_plex_connection,
             )
-            print(Fore.BLUE + "https://app.plex.tv" + Fore.RESET + "\n")
-            new_token = read_line("Enter new Plex Token (Esc to cancel): ")
-            if new_token is None:
-                continue
-            new_token = new_token.strip()
-            if not new_token:
-                print(
-                    Fore.RED
-                    + f"{emojis.CROSS} Plex Token cannot be empty. Not saved.\n"
-                )
-                pause()
-                continue
-            config["PLEX_TOKEN"] = new_token
-            save_config(config)
-            print(Fore.GREEN + f"{emojis.CHECK} Plex Token saved successfully!\n")
-            test_plex_connection(config)
-            pause()
         elif choice == "2":
-            clear_screen()
-            print(Fore.YELLOW + "2." + Fore.RESET + f" {emojis.URL} Set Plex URL\n")
-            print(
-                Fore.LIGHTBLACK_EX
-                + "You can find your Plex URL under Settings > Remote Access here:"
-                + Fore.RESET
-            )
-            print(
-                Fore.BLUE
-                + "https://app.plex.tv/desktop/#!/settings/server"
-                + Fore.RESET
-                + "\n"
-            )
-            new_url = read_line("Enter new Plex URL (Esc to cancel): ")
-            if new_url is None:
-                continue
-            new_url = new_url.strip()
-            if not new_url:
-                print(
-                    Fore.RED + f"{emojis.CROSS} Plex URL cannot be empty. Not saved.\n"
-                )
-                pause()
-                continue
+            def validate_url(url):
+                if not url:
+                    print(Fore.RED + f"{emojis.CROSS} Plex URL cannot be empty.\n")
+                    return None
+                # Sanitize: remove spaces (common when copying from Plex UI: "IP : Port")
+                url = url.replace(" ", "")
+                # Auto-add http:// if missing
+                if not url.lower().startswith("http://") and not url.lower().startswith("https://"):
+                    url = "http://" + url
+                    print(Fore.YELLOW + f"{emojis.INFO} Auto-formatted URL to: {url}")
+                return url
 
-            # Sanitize: remove spaces (common when copying from Plex UI: "IP : Port")
-            new_url = new_url.replace(" ", "")
-            # Auto-add http:// if missing
-            if not new_url.lower().startswith(
-                "http://"
-            ) and not new_url.lower().startswith("https://"):
-                new_url = "http://" + new_url
-                print(Fore.YELLOW + f"{emojis.INFO} Auto-formatted URL to: {new_url}")
-
-            config["PLEX_URL"] = new_url
-            save_config(config)
-            print(Fore.GREEN + f"{emojis.CHECK} Plex URL saved successfully!\n")
-            test_plex_connection(config)
-            pause()
+            _prompt_update_config(
+                "PLEX_URL",
+                "Enter new Plex URL (Esc to cancel): ",
+                Fore.YELLOW + "2." + Fore.RESET + f" {emojis.URL} Set Plex URL",
+                "You can find your Plex URL under Settings > Remote Access here:\n"
+                + Fore.BLUE
+                + "https://app.plex.tv/desktop/#!/settings/server",
+                validator=validate_url,
+                tester=test_plex_connection,
+            )
         elif choice == "3":
-            clear_screen()
-            print(
-                Fore.BLUE + "3." + Fore.RESET + f" {emojis.CLAPPER} Set TMDb API Key\n"
+            _prompt_update_config(
+                "TMDB_API_KEY",
+                "Enter new TMDb API Key (Esc to cancel): ",
+                Fore.BLUE + "3." + Fore.RESET + f" {emojis.CLAPPER} Set TMDb API Key",
+                "You can generate an API Key in your account settings:\n"
+                + Fore.BLUE
+                + "https://www.themoviedb.org/settings/api",
+                tester=test_tmdb_connection,
             )
-            print(
-                Fore.LIGHTBLACK_EX
-                + "You can generate an API Key in your account settings:"
-                + Fore.RESET
-            )
-            print(
-                Fore.BLUE
-                + "https://www.themoviedb.org/settings/api"
-                + Fore.RESET
-                + "\n"
-            )
-            new_key = read_line("Enter new TMDb API Key (Esc to cancel): ")
-            if new_key is None:
-                continue
-            config["TMDB_API_KEY"] = new_key.strip()
-            save_config(config)
-            print(Fore.GREEN + f"{emojis.CHECK} TMDb API Key saved successfully!\n")
-            test_tmdb_connection(config)
-            pause()
         elif choice == "4":
             clear_screen()
             print(

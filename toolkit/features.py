@@ -104,6 +104,138 @@ def run_franchise_mode(tmdb, pause_fn):
     return collection_name.strip(), titles
 
 
+def _handle_tmdb_discovery(tmdb, pause_fn):
+    """Handles Studio Mode Option 1: TMDb Discovery."""
+    clear_screen()
+    print(Fore.GREEN + "1." + Fore.RESET + f" {emojis.URL} Discover via TMDb API\n")
+    print(
+        Fore.LIGHTBLACK_EX
+        + "Best for official Studios (Ghibli), Networks (HBO), and Universes (MCU)."
+        + Fore.RESET
+        + "\n"
+    )
+    titles = []
+    if not tmdb:
+        print(
+            Fore.RED
+            + f"\n{emojis.CROSS} TMDb API key not provided. Using fallback data.\n"
+        )
+        studios_data = load_fallback_data("Studios")
+        choice = pick_from_list_case_insensitive(
+            "\n" + Fore.LIGHTBLACK_EX + "Select a studio (Esc to cancel): ",
+            studios_data.keys(),
+        )
+        if choice is None:
+            return None, None, False, None
+        titles = studios_data.get(choice, [])
+    else:
+        pretty_names = [
+            k.upper() if k in ("mcu", "dceu") else k.title()
+            for k in constants.STUDIO_MAP.keys()
+        ]
+        print_grid(
+            pretty_names,
+            columns=3,
+            padding=24,
+            title=Fore.GREEN + "\nAvailable Studios:",
+        )
+        choice_pretty = pick_from_list_case_insensitive(
+            "\n" + Fore.LIGHTBLACK_EX + "Select a studio (Esc to cancel): ",
+            pretty_names,
+        )
+        if choice_pretty is None:
+            return None, None, False, None
+
+        studio_info = constants.STUDIO_MAP[choice_pretty.lower()]
+        try:
+            titles = tmdb.discover_movies(
+                company_id=studio_info.get("company"),
+                keyword_id=studio_info.get("keyword"),
+            )
+        except Exception as e:
+            print(Fore.RED + f"{emojis.CROSS} Error retrieving movies from TMDb: {e}")
+            pause_fn()
+            return None, None, False, None
+
+    collection_name = read_line("Enter a name for your new collection (Esc to cancel): ")
+    if collection_name is None:
+        return None, None, False, None
+    return collection_name.strip(), titles, False, None
+
+
+def _handle_online_lists(pause_fn):
+    """Handles Studio Mode Option 2: Wikipedia/Online Lists."""
+    clear_screen()
+    print(
+        Fore.GREEN
+        + "2."
+        + Fore.RESET
+        + f" {emojis.BOOK} Import from Online Lists (Wikipedia/Criterion)\n"
+    )
+    print(
+        Fore.LIGHTBLACK_EX
+        + "Best for frequently updated lists (e.g. Criterion, Academy Award Winners)."
+        + Fore.RESET
+        + "\n"
+    )
+    print_grid(
+        constants.WIKIPEDIA_URLS.keys(),
+        columns=2,
+        padding=40,
+        title=Fore.GREEN + "\nSupported Studios:",
+    )
+    choice = pick_from_list_case_insensitive(
+        "\n" + Fore.LIGHTBLACK_EX + "Select a studio (Esc to cancel): ",
+        constants.WIKIPEDIA_URLS.keys(),
+    )
+    if choice is None:
+        return None, None, False, None
+
+    titles = scraper.scrape_wikipedia_film_list(constants.WIKIPEDIA_URLS[choice])
+    if not titles:
+        pause_fn()
+        return None, None, False, None
+
+    collection_name = read_line(
+        f"Enter a name for your new collection (Default: {choice}): "
+    )
+    if not collection_name or not collection_name.strip():
+        collection_name = choice
+    return collection_name.strip(), titles, False, None
+
+
+def _handle_fallback_lists():
+    """Handles Studio Mode Option 4: Offline Fallback."""
+    clear_screen()
+    print(
+        Fore.GREEN
+        + "4."
+        + Fore.RESET
+        + f" {emojis.FRANCHISE} Use Built-in Lists (Offline)\n"
+    )
+    studios_data = load_fallback_data("Studios")
+    print_grid(
+        studios_data.keys(),
+        columns=3,
+        padding=24,
+        title=Fore.GREEN + "Available Studios:",
+    )
+    choice = pick_from_list_case_insensitive(
+        "\n" + Fore.LIGHTBLACK_EX + "Select a studio (Esc to cancel): ",
+        studios_data.keys(),
+    )
+    if choice is None:
+        return None, None, False, None
+    titles = studios_data.get(choice, [])
+
+    collection_name = read_line(
+        f"Enter a name for your new collection (Default: {choice}): "
+    )
+    if not collection_name or not collection_name.strip():
+        collection_name = choice
+    return collection_name.strip(), titles, False, None
+
+
 def run_studio_mode(tmdb, config, pause_fn):
     """Handles the studio/keyword mode."""
     clear_screen()
@@ -148,105 +280,11 @@ def run_studio_mode(tmdb, config, pause_fn):
 
     # Option 1: TMDb (Moved from end of function)
     if mode == "1":
-        clear_screen()
-        print(Fore.GREEN + "1." + Fore.RESET + f" {emojis.URL} Discover via TMDb API\n")
-        print(
-            Fore.LIGHTBLACK_EX
-            + "Best for official Studios (Ghibli), Networks (HBO), and Universes (MCU)."
-            + Fore.RESET
-            + "\n"
-        )
-        titles = []
-        if not tmdb:
-            print(
-                Fore.RED
-                + f"\n{emojis.CROSS} TMDb API key not provided. Using fallback data.\n"
-            )
-            studios_data = load_fallback_data("Studios")
-            choice = pick_from_list_case_insensitive(
-                "\n" + Fore.LIGHTBLACK_EX + "Select a studio (Esc to cancel): ",
-                studios_data.keys(),
-            )
-            if choice is None:
-                return None, None, False, None
-            titles = studios_data.get(choice, [])
-        else:
-            pretty_names = [
-                k.upper() if k in ("mcu", "dceu") else k.title()
-                for k in constants.STUDIO_MAP.keys()
-            ]
-            print_grid(
-                pretty_names,
-                columns=3,
-                padding=24,
-                title=Fore.GREEN + "\nAvailable Studios:",
-            )
-            choice_pretty = pick_from_list_case_insensitive(
-                "\n" + Fore.LIGHTBLACK_EX + "Select a studio (Esc to cancel): ",
-                pretty_names,
-            )
-            if choice_pretty is None:
-                return None, None, False, None
-
-            studio_info = constants.STUDIO_MAP[choice_pretty.lower()]
-            try:
-                titles = tmdb.discover_movies(
-                    company_id=studio_info.get("company"),
-                    keyword_id=studio_info.get("keyword"),
-                )
-            except Exception as e:
-                print(
-                    Fore.RED + f"{emojis.CROSS} Error retrieving movies from TMDb: {e}"
-                )
-                pause_fn()
-                return None, None, False, None
-
-        collection_name = read_line(
-            "Enter a name for your new collection (Esc to cancel): "
-        )
-        if collection_name is None:
-            return None, None, False, None
-        return collection_name.strip(), titles, False, None
+        return _handle_tmdb_discovery(tmdb, pause_fn)
 
     # Option 2: Wikipedia (Moved from mode 3)
     if mode == "2":
-        clear_screen()
-        print(
-            Fore.GREEN
-            + "2."
-            + Fore.RESET
-            + f" {emojis.BOOK} Import from Online Lists (Wikipedia/Criterion)\n"
-        )
-        print(
-            Fore.LIGHTBLACK_EX
-            + "Best for frequently updated lists (e.g. Criterion, Academy Award Winners)."
-            + Fore.RESET
-            + "\n"
-        )
-        print_grid(
-            constants.WIKIPEDIA_URLS.keys(),
-            columns=2,
-            padding=40,
-            title=Fore.GREEN + "\nSupported Studios:",
-        )
-        choice = pick_from_list_case_insensitive(
-            "\n" + Fore.LIGHTBLACK_EX + "Select a studio (Esc to cancel): ",
-            constants.WIKIPEDIA_URLS.keys(),
-        )
-        if choice is None:
-            return None, None, False, None
-
-        titles = scraper.scrape_wikipedia_film_list(constants.WIKIPEDIA_URLS[choice])
-        if not titles:
-            pause_fn()
-            return None, None, False, None
-
-        collection_name = read_line(
-            f"Enter a name for your new collection (Default: {choice}): "
-        )
-        if not collection_name or not collection_name.strip():
-            collection_name = choice
-        return collection_name.strip(), titles, False, None
+        return _handle_online_lists(pause_fn)
 
     # Option 3: Plex Native (Moved from mode 1)
     if mode == "3":
@@ -343,34 +381,7 @@ def run_studio_mode(tmdb, config, pause_fn):
 
     # Option 4: Fallback / Offline
     if mode == "4":
-        clear_screen()
-        print(
-            Fore.GREEN
-            + "4."
-            + Fore.RESET
-            + f" {emojis.FRANCHISE} Use Built-in Lists (Offline)\n"
-        )
-        studios_data = load_fallback_data("Studios")
-        print_grid(
-            studios_data.keys(),
-            columns=3,
-            padding=24,
-            title=Fore.GREEN + "Available Studios:",
-        )
-        choice = pick_from_list_case_insensitive(
-            "\n" + Fore.LIGHTBLACK_EX + "Select a studio (Esc to cancel): ",
-            studios_data.keys(),
-        )
-        if choice is None:
-            return None, None, False, None
-        titles = studios_data.get(choice, [])
-
-        collection_name = read_line(
-            f"Enter a name for your new collection (Default: {choice}): "
-        )
-        if not collection_name or not collection_name.strip():
-            collection_name = choice
-        return collection_name.strip(), titles, False, None
+        return _handle_fallback_lists()
 
 
 def run_poster_tool(config, pause_fn):
