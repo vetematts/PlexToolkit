@@ -237,6 +237,37 @@ def handle_credentials_menu():
         def pause(msg: str = "Press Enter or Esc to return to the menu..."):
             read_line(msg)
 
+        def _prompt_update_config(
+            key, prompt, header_text, info_text, validator=None, tester=None
+        ):
+            """Helper to handle the UI flow for updating a config value."""
+            clear_screen()
+            print(header_text + "\n")
+            if info_text:
+                print(Fore.LIGHTBLACK_EX + info_text + Fore.RESET + "\n")
+
+            new_val = read_line(prompt)
+            if new_val is None:
+                return
+
+            new_val = new_val.strip()
+            if validator:
+                new_val = validator(new_val)
+                if new_val is None:  # Validator handles error printing
+                    pause()
+                    return
+            elif not new_val:
+                print(Fore.RED + f"{emojis.CROSS} Value cannot be empty.\n")
+                pause()
+                return
+
+            config[key] = new_val
+            save_config(config)
+            print(Fore.GREEN + f"{emojis.CHECK} Saved successfully!\n")
+            if tester:
+                tester(config)
+            pause()
+
         if choice == "ESC" or choice == "7":
             break
         if choice == "1":
