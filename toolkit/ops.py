@@ -360,7 +360,9 @@ def process_and_create_collection(
         return
 
     # Handle existing collections (Append/Overwrite/Cancel)
-    action = _handle_existing_collection(library, collection_name, found_movies, pause_fn)
+    action = _handle_existing_collection(
+        library, collection_name, found_movies, pause_fn
+    )
     if action == "stop":
         return
     elif action == "proceed":

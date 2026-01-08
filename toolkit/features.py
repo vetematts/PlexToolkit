@@ -52,8 +52,7 @@ def run_manual_mode(pause_fn):
 def _handle_franchise_fallback():
     """Handles Franchise Mode Option: Offline Fallback."""
     print(
-        Fore.RED
-        + f"\n{emojis.CROSS} TMDb API key not provided. Using fallback data.\n"
+        Fore.RED + f"\n{emojis.CROSS} TMDb API key not provided. Using fallback data.\n"
     )
     franchises_data = load_fallback_data("Franchises")
     print_grid(
