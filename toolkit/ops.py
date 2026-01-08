@@ -282,6 +282,32 @@ def _handle_existing_collection(library, collection_name, found_movies, pause_fn
     return "stop"
 
 
+def _match_movies_in_plex(library, items):
+    """Finds Plex items corresponding to a list of titles."""
+    found_movies = []
+    not_found = []
+    seen_rating_keys = set()
+
+    print(f"\n{emojis.INFO} Searching Plex for {len(items)} items...")
+
+    for raw in items:
+        title, _ = extract_title_and_year(raw)
+        try:
+            results = library.search(title)
+            chosen = pick_plex_match(raw, results)
+            if chosen is None:
+                not_found.append(raw)
+                continue
+            rating_key = str(getattr(chosen, "ratingKey", ""))
+            if rating_key and rating_key not in seen_rating_keys:
+                seen_rating_keys.add(rating_key)
+                found_movies.append(chosen)
+        except Exception as e:
+            print(f"Error searching for '{raw}': {e}")
+            not_found.append(raw)
+    return found_movies, not_found
+
+
 def process_and_create_collection(
     collection_name, items, config, pause_fn, is_pre_matched=False, smart_filter=None
 ):
@@ -315,29 +341,13 @@ def process_and_create_collection(
         # If not handled, it means user wants to fallback to a static collection
 
     # --- Static Collection Logic ---
-    found_movies, not_found, matched_pairs = [], [], []
-    seen_rating_keys = set()
+    found_movies, not_found = [], []
 
     if is_pre_matched:
         found_movies = items
     else:
         try:
-            for raw in items:
-                title, _ = extract_title_and_year(raw)
-                try:
-                    results = library.search(title)
-                    chosen = pick_plex_match(raw, results)
-                    if chosen is None:
-                        not_found.append(raw)
-                        continue
-                    rating_key = str(getattr(chosen, "ratingKey", ""))
-                    if rating_key and rating_key not in seen_rating_keys:
-                        seen_rating_keys.add(rating_key)
-                        found_movies.append(chosen)
-                        matched_pairs.append((raw, chosen))
-                except Exception as e:
-                    print(f"Error searching for '{raw}': {e}")
-                    not_found.append(raw)
+            found_movies, not_found = _match_movies_in_plex(library, items)
         except UserAbort:
             print("Canceled.")
             pause_fn()

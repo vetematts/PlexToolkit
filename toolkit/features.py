@@ -400,6 +400,34 @@ def run_studio_mode(tmdb, config, pause_fn):
         return _handle_fallback_lists()
 
 
+def _get_items_for_poster_tool(library, choice, pause_fn):
+    """Selects items to process based on user choice (Collection vs All)."""
+    if choice == "1":
+        print(f"\n{emojis.INFO} Fetching collections from Plex...")
+        col_names = sorted([c.title for c in library.collections()])
+        if not col_names:
+            print(Fore.YELLOW + "No collections found.")
+            pause_fn()
+            return None
+
+        print_grid(
+            col_names,
+            columns=2,
+            padding=30,
+            title=Fore.GREEN + "Available Collections:",
+        )
+        col_name = pick_from_list_case_insensitive(
+            "\n" + Fore.LIGHTBLACK_EX + "Select a collection (Esc to cancel): ",
+            col_names,
+        )
+        if not col_name:
+            return None
+        return library.collection(col_name).items()
+    elif choice == "2":
+        return library.all()
+    return []
+
+
 def run_poster_tool(config, pause_fn):
     """Sub-menu for fixing posters."""
     clear_screen()
@@ -428,30 +456,9 @@ def run_poster_tool(config, pause_fn):
         if not library:
             return
 
-        items_to_process = []
-        if choice == "1":
-            print(f"\n{emojis.INFO} Fetching collections from Plex...")
-            col_names = sorted([c.title for c in library.collections()])
-            if not col_names:
-                print(Fore.YELLOW + "No collections found.")
-                pause_fn()
-                return
-
-            print_grid(
-                col_names,
-                columns=2,
-                padding=30,
-                title=Fore.GREEN + "Available Collections:",
-            )
-            col_name = pick_from_list_case_insensitive(
-                "\n" + Fore.LIGHTBLACK_EX + "Select a collection (Esc to cancel): ",
-                col_names,
-            )
-            if not col_name:
-                return
-            items_to_process = library.collection(col_name).items()
-        elif choice == "2":
-            items_to_process = library.all()
+        items_to_process = _get_items_for_poster_tool(library, choice, pause_fn)
+        if not items_to_process:
+            return
 
         for i, item in enumerate(items_to_process, 1):
             print(f"[{i}/{len(items_to_process)}] Checking '{item.title}'...")
