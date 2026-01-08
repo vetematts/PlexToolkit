@@ -537,7 +537,10 @@ def run_collection_cleaner(config, pause_fn):
 
     print(Fore.GREEN + "1." + Fore.RESET + " Find & Delete Empty Collections (0 items)")
     print(
-        Fore.GREEN + "2." + Fore.RESET + " Find & Delete Single-Item Collections (1 item)"
+        Fore.GREEN
+        + "2."
+        + Fore.RESET
+        + " Find & Delete Single-Item Collections (1 item)"
     )
     print(Fore.RED + "3." + Fore.RESET + f" {emojis.BACK} Return to main menu\n")
 

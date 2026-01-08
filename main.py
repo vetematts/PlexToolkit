@@ -197,9 +197,7 @@ def handle_main_menu() -> str:
     print(
         Fore.YELLOW + "5." + Fore.RESET + f" {emojis.ART} Fix Posters & Backgrounds\n"
     )
-    print(
-        Fore.YELLOW + "6." + Fore.RESET + f" {emojis.BROOM} Collection Cleaner\n"
-    )
+    print(Fore.YELLOW + "6." + Fore.RESET + f" {emojis.BROOM} Collection Cleaner\n")
     print(
         Fore.YELLOW
         + "7."
