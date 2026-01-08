@@ -47,17 +47,12 @@ def pick_plex_match(raw_title: str, results):
                 continue  # Strict year mismatch
 
         # 2. Title Matching Logic
-        is_match = False
-        if search_norm == item_norm:
-            is_match = True
-        elif item_norm.startswith(search_norm) and (
-            len(item_norm) == len(search_norm) or item_norm[len(search_norm)] == " "
-        ):
-            is_match = True
-        elif search_norm.startswith(item_norm) and (
-            len(search_norm) == len(item_norm) or search_norm[len(item_norm)] == " "
-        ):
-            is_match = True
+        # Exact match, or one is a prefix of the other (e.g. "Alien" vs "Alien 3")
+        is_match = (
+            search_norm == item_norm
+            or item_norm.startswith(f"{search_norm} ")
+            or search_norm.startswith(f"{item_norm} ")
+        )
 
         if not is_match and years_match:
             ratio = difflib.SequenceMatcher(None, search_norm, item_norm).ratio()
@@ -70,6 +65,7 @@ def pick_plex_match(raw_title: str, results):
     if not good_matches:
         return None
 
+    # Sort by title similarity
     good_matches.sort(
         key=lambda x: difflib.SequenceMatcher(
             None, search_norm, normalize_title(x.title)
@@ -77,17 +73,8 @@ def pick_plex_match(raw_title: str, results):
         reverse=True,
     )
 
-    if len(good_matches) > 0:
-        best = good_matches[0]
-        best_norm = normalize_title(best.title)
-        if best_norm == search_norm:
-            return best
-        if best_norm.startswith(search_norm) and len(good_matches) == 1:
-            return best
-        if search_norm.startswith(best_norm) and len(good_matches) == 1:
-            return best
-
-    if len(good_matches) == 1:
+    # If only one match, or the best match is an exact title match, return it automatically.
+    if len(good_matches) == 1 or normalize_title(good_matches[0].title) == search_norm:
         return good_matches[0]
 
     print(f"\nMultiple Plex matches for '{raw_title}':")
@@ -100,6 +87,106 @@ def pick_plex_match(raw_title: str, results):
     if idx is None:
         return None
     return good_matches[idx - 1]
+
+
+def _create_smart_collection_fallback(library, collection_name, smart_filter):
+    """Fallback to create a smart collection via direct API call for older plexapi versions."""
+    server = library._server
+    section_id = library.key
+
+    # Prepare filter params (ensure type=1 for movies)
+    filter_params = {"type": 1}
+    filter_params.update(smart_filter)
+
+    # Construct the internal URI for the filter
+    path = f"/library/sections/{section_id}/all"
+    query = urlencode(filter_params)
+    uri_path = f"{path}?{query}"
+
+    # Full server:// URI
+    server_uri = f"server://{server.machineIdentifier}/com.plexapp.plugins.library{uri_path}"
+
+    # Create collection params
+    create_params = {
+        "title": collection_name,
+        "smart": 1,
+        "sectionId": section_id,
+        "type": 1,
+        "uri": server_uri,
+    }
+
+    url = server.url("/library/collections")
+    res = requests.post(url, headers=server._headers(), params=create_params)
+
+    if res.status_code >= 400:
+        raise Exception(f"HTTP {res.status_code}: {res.text}")
+
+    print(
+        f"\n{emojis.CHECK} Smart Collection '{collection_name}' created successfully (Fallback)!"
+    )
+
+
+def _process_smart_collection(library, collection_name, smart_filter, pause_fn):
+    """Handles the creation logic for a smart collection."""
+    print(f"\n{emojis.INFO} Creating Smart Collection with filter: {smart_filter}")
+
+    # Check if it exists
+    existing = library.search(title=collection_name, libtype="collection")
+    if existing:
+        print(
+            Fore.YELLOW
+            + f"\n{emojis.INFO} Collection '{collection_name}' already exists."
+            + Fore.RESET
+        )
+        is_smart = getattr(existing[0], "smart", False)
+        type_label = "Smart" if is_smart else "Static"
+        print(
+            Fore.LIGHTBLACK_EX
+            + f"The existing collection is {type_label}. You cannot append a Smart rule to it."
+            + Fore.RESET
+        )
+
+        confirm = read_line("Overwrite existing collection? (y/n): ")
+        if confirm and confirm.lower() == "y":
+            print(Fore.YELLOW + f"Deleting '{collection_name}'..." + Fore.RESET)
+            existing[0].delete()
+        else:
+            print("Canceled.")
+            return
+
+    try:
+        library.createSmartCollection(collection_name, **smart_filter)
+        print(
+            f"\n{emojis.CHECK} Smart Collection '{collection_name}' created successfully!"
+        )
+    except AttributeError as e:
+        if "createSmartCollection" in str(e):
+            print(
+                Fore.YELLOW
+                + f"\n{emojis.INFO} 'plexapi' is outdated. Attempting fallback method..."
+                + Fore.RESET
+            )
+            try:
+                _create_smart_collection_fallback(library, collection_name, smart_filter)
+            except Exception as fallback_error:
+                print(Fore.RED + f"\n{emojis.CROSS} Fallback failed: {fallback_error}")
+                print(Fore.RED + "Please run: pip install --upgrade plexapi")
+                fallback = read_line(
+                    Fore.YELLOW
+                    + "\nCreate a standard (static) collection instead? (y/n): "
+                    + Fore.RESET
+                )
+                if not fallback or fallback.lower() != "y":
+                    return
+                # Let the main function proceed to static creation
+                print(f"\n{emojis.INFO} Proceeding with static collection...")
+                return False  # Indicates smart creation failed, static is fallback
+        else:
+            print(Fore.RED + f"\n{emojis.CROSS} Failed to create Smart Collection: {e}")
+    except Exception as e:
+        print(Fore.RED + f"\n{emojis.CROSS} Failed to create Smart Collection: {e}")
+
+    return True  # Indicates smart collection was handled (created or failed with no fallback)
 
 
 def process_and_create_collection(
@@ -126,115 +213,15 @@ def process_and_create_collection(
 
     # --- Smart Collection Logic ---
     if smart_filter:
-        print(f"\n{emojis.INFO} Creating Smart Collection: {smart_filter}")
-        # Check if it exists
-        existing = library.search(title=collection_name, libtype="collection")
-        if existing:
-            print(
-                Fore.YELLOW
-                + f"\n{emojis.INFO} Collection '{collection_name}' already exists."
-                + Fore.RESET
-            )
-
-            # Check if existing is smart or static for better context
-            is_smart = getattr(existing[0], "smart", False)
-            type_label = "Smart" if is_smart else "Static"
-            print(
-                Fore.LIGHTBLACK_EX
-                + f"The existing collection is {type_label}. You cannot append a Smart rule to it."
-                + Fore.RESET
-            )
-
-            confirm = read_line("Overwrite existing collection? (y/n): ")
-            if confirm and confirm.lower() == "y":
-                print(Fore.YELLOW + f"Deleting '{collection_name}'..." + Fore.RESET)
-                existing[0].delete()
-            else:
-                print("Canceled.")
-                pause_fn()
-                return
-
-        try:
-            library.createSmartCollection(collection_name, **smart_filter)
-            print(
-                f"\n{emojis.CHECK} Smart Collection '{collection_name}' created successfully!"
-            )
+        was_handled = _process_smart_collection(
+            library, collection_name, smart_filter, pause_fn
+        )
+        if was_handled:
             pause_fn()
             return
-        except AttributeError as e:
-            if "createSmartCollection" in str(e):
-                print(
-                    Fore.YELLOW
-                    + f"\n{emojis.INFO} 'plexapi' is outdated. Attempting fallback method..."
-                    + Fore.RESET
-                )
-                try:
-                    # Fallback: Manual API call for older plexapi versions
-                    server = library._server
-                    section_id = library.key
+        # If not handled, it means user wants to fallback to a static collection
 
-                    # Prepare filter params (ensure type=1 for movies)
-                    filter_params = {"type": 1}
-                    filter_params.update(smart_filter)
-
-                    # Construct the internal URI for the filter
-                    # path: /library/sections/{id}/all
-                    path = f"/library/sections/{section_id}/all"
-                    query = urlencode(filter_params)
-                    uri_path = f"{path}?{query}"
-
-                    # Full server:// URI
-                    server_uri = f"server://{server.machineIdentifier}/com.plexapp.plugins.library{uri_path}"
-
-                    # Create collection params
-                    create_params = {
-                        "title": collection_name,
-                        "smart": 1,
-                        "sectionId": section_id,
-                        "type": 1,
-                        "uri": server_uri,
-                    }
-
-                    url = server.url("/library/collections")
-                    res = requests.post(
-                        url, headers=server._headers(), params=create_params
-                    )
-
-                    if res.status_code >= 400:
-                        raise Exception(f"HTTP {res.status_code}")
-
-                    print(
-                        f"\n{emojis.CHECK} Smart Collection '{collection_name}' created successfully (Fallback)!"
-                    )
-                    pause_fn()
-                    return
-                except Exception as fallback_error:
-                    print(
-                        Fore.RED + f"\n{emojis.CROSS} Fallback failed: {fallback_error}"
-                    )
-                    print(Fore.RED + "Please run: pip install --upgrade plexapi")
-
-                fallback = read_line(
-                    Fore.YELLOW
-                    + "\nCreate a standard (static) collection instead? (y/n): "
-                    + Fore.RESET
-                )
-                if not fallback or fallback.lower() != "y":
-                    pause_fn()
-                    return
-                print(f"\n{emojis.INFO} Proceeding with static collection...")
-            else:
-                print(
-                    Fore.RED
-                    + f"\n{emojis.CROSS} Failed to create Smart Collection: {e}"
-                )
-                pause_fn()
-                return
-        except Exception as e:
-            print(Fore.RED + f"\n{emojis.CROSS} Failed to create Smart Collection: {e}")
-            pause_fn()
-            return
-
+    # --- Static Collection Logic ---
     found_movies, not_found, matched_pairs = [], [], []
     seen_rating_keys = set()
 
@@ -348,6 +335,7 @@ def process_and_create_collection(
                 print(Fore.RED + f"\n{emojis.CROSS} Failed to append items: {e}")
             finally:
                 pause_fn()
+                return
 
         if choice in ("o", "O"):
             print(
