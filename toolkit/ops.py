@@ -104,7 +104,9 @@ def _create_smart_collection_fallback(library, collection_name, smart_filter):
     uri_path = f"{path}?{query}"
 
     # Full server:// URI
-    server_uri = f"server://{server.machineIdentifier}/com.plexapp.plugins.library{uri_path}"
+    server_uri = (
+        f"server://{server.machineIdentifier}/com.plexapp.plugins.library{uri_path}"
+    )
 
     # Create collection params
     create_params = {
@@ -167,7 +169,9 @@ def _process_smart_collection(library, collection_name, smart_filter, pause_fn):
                 + Fore.RESET
             )
             try:
-                _create_smart_collection_fallback(library, collection_name, smart_filter)
+                _create_smart_collection_fallback(
+                    library, collection_name, smart_filter
+                )
             except Exception as fallback_error:
                 print(Fore.RED + f"\n{emojis.CROSS} Fallback failed: {fallback_error}")
                 print(Fore.RED + "Please run: pip install --upgrade plexapi")
