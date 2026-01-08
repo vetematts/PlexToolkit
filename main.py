@@ -198,19 +198,22 @@ def handle_main_menu() -> str:
         Fore.YELLOW + "5." + Fore.RESET + f" {emojis.ART} Fix Posters & Backgrounds\n"
     )
     print(
+        Fore.YELLOW + "6." + Fore.RESET + f" {emojis.BROOM} Collection Cleaner\n"
+    )
+    print(
         Fore.YELLOW
-        + "6."
+        + "7."
         + Fore.RESET
         + f" {emojis.CONFIGURE} Settings & Credentials\n"
     )
-    print(Fore.RED + "7." + Fore.RESET + f" {emojis.EXIT} Exit\n")
+    print(Fore.RED + "8." + Fore.RESET + f" {emojis.EXIT} Exit\n")
     print(
         Fore.LIGHTBLACK_EX
         + f"{emojis.INFO}  You can return to this menu after each collection is created.\n"
     )
-    mode = read_menu_choice("Select an option (Esc to exit): ", set("1234567"))
+    mode = read_menu_choice("Select an option (Esc to exit): ", set("12345678"))
     if mode == "ESC":
-        return "7"
+        return "8"
     return mode
 
 
@@ -452,12 +455,12 @@ def run_collection_builder():
 
         mode = handle_main_menu()
 
-        if mode not in ("1", "2", "3", "4", "5", "6", "7"):
-            print("Invalid selection. Please choose a valid menu option (1-7).")
+        if mode not in ("1", "2", "3", "4", "5", "6", "7", "8"):
+            print("Invalid selection. Please choose a valid menu option (1-8).")
             pause()
             continue
 
-        if mode == "7":
+        if mode == "8":
             print(f"{emojis.WAVE} Goodbye!")
             return
 
@@ -470,8 +473,12 @@ def run_collection_builder():
             features.run_poster_tool(config, pause)
             continue
 
-        # Credentials settings
         if mode == "6":
+            features.run_collection_cleaner(config, pause)
+            continue
+
+        # Credentials settings
+        if mode == "7":
             handle_credentials_menu()
             continue  # back to main loop
 

@@ -521,3 +521,69 @@ def run_poster_tool(config, pause_fn):
     except Exception as e:
         print(Fore.RED + f"Error: {e}")
     pause_fn()
+
+
+def run_collection_cleaner(config, pause_fn):
+    """Finds and deletes empty or small collections."""
+    clear_screen()
+    print()
+    print(Fore.YELLOW + f"{emojis.BROOM}  Collection Cleaner\n")
+    print(
+        Fore.LIGHTBLACK_EX
+        + "Identify and remove clutter from your library."
+        + Fore.RESET
+        + "\n"
+    )
+
+    print(Fore.GREEN + "1." + Fore.RESET + " Find & Delete Empty Collections (0 items)")
+    print(
+        Fore.GREEN + "2." + Fore.RESET + " Find & Delete Single-Item Collections (1 item)"
+    )
+    print(Fore.RED + "3." + Fore.RESET + f" {emojis.BACK} Return to main menu\n")
+
+    choice = read_menu_choice("Select an option: ", set("123"))
+    if choice == "3" or choice == "ESC":
+        return
+
+    try:
+        pm = PlexManager(config.get("PLEX_TOKEN"), config.get("PLEX_URL"))
+        library = pm.get_movie_library(config.get("PLEX_LIBRARY", "Movies"))
+        if not library:
+            pause_fn()
+            return
+
+        print(f"\n{emojis.INFO} Scanning collections...")
+        all_collections = library.collections()
+
+        targets = []
+        if choice == "1":
+            targets = [c for c in all_collections if c.childCount == 0]
+            label = "empty"
+        elif choice == "2":
+            targets = [c for c in all_collections if c.childCount == 1]
+            label = "single-item"
+
+        if not targets:
+            print(Fore.GREEN + f"\n{emojis.CHECK} No {label} collections found!")
+            pause_fn()
+            return
+
+        print_grid(
+            [f"{c.title} ({c.childCount})" for c in targets],
+            columns=2,
+            title=Fore.YELLOW + f"\nFound {len(targets)} {label} collections:",
+        )
+
+        confirm = read_line(f"\nDelete these {len(targets)} collections? (y/n): ")
+        if confirm and confirm.lower() == "y":
+            for c in targets:
+                print(f"Deleting '{c.title}'...")
+                c.delete()
+            print(f"\n{emojis.CHECK} Cleanup complete.")
+        else:
+            print("Cancelled.")
+
+    except Exception as e:
+        print(Fore.RED + f"Error: {e}")
+
+    pause_fn()
