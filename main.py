@@ -406,7 +406,7 @@ def handle_credentials_menu():
 
             _print_kv(
                 emojis.INFO,
-                "Plex Last Tested",
+                " Plex Last Tested",
                 (
                     (Fore.GREEN + last_plex + Fore.RESET)
                     if last_plex
@@ -415,7 +415,7 @@ def handle_credentials_menu():
             )
             _print_kv(
                 emojis.INFO,
-                "TMDb Last Tested",
+                " TMDb Last Tested",
                 (
                     (Fore.GREEN + last_tmdb + Fore.RESET)
                     if last_tmdb
