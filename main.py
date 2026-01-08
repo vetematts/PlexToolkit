@@ -250,6 +250,7 @@ def handle_credentials_menu():
                 tester=test_plex_connection,
             )
         elif choice == "2":
+
             def validate_url(url):
                 if not url:
                     print(Fore.RED + f"{emojis.CROSS} Plex URL cannot be empty.\n")
@@ -257,7 +258,9 @@ def handle_credentials_menu():
                 # Sanitize: remove spaces (common when copying from Plex UI: "IP : Port")
                 url = url.replace(" ", "")
                 # Auto-add http:// if missing
-                if not url.lower().startswith("http://") and not url.lower().startswith("https://"):
+                if not url.lower().startswith("http://") and not url.lower().startswith(
+                    "https://"
+                ):
                     url = "http://" + url
                     print(Fore.YELLOW + f"{emojis.INFO} Auto-formatted URL to: {url}")
                 return url

@@ -157,7 +157,9 @@ def _handle_tmdb_discovery(tmdb, pause_fn):
             pause_fn()
             return None, None, False, None
 
-    collection_name = read_line("Enter a name for your new collection (Esc to cancel): ")
+    collection_name = read_line(
+        "Enter a name for your new collection (Esc to cancel): "
+    )
     if collection_name is None:
         return None, None, False, None
     return collection_name.strip(), titles, False, None
