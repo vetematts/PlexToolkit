@@ -348,7 +348,6 @@ def process_and_create_collection(
                 print(Fore.RED + f"\n{emojis.CROSS} Failed to append items: {e}")
             finally:
                 pause_fn()
-                return
 
         if choice in ("o", "O"):
             print(
