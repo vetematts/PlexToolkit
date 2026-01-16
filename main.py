@@ -130,12 +130,16 @@ if TMDB_API_KEY:
     config[constants.CONFIG_TMDB_API_KEY] = TMDB_API_KEY
 
 
-def welcome():
+def welcome(show_logo=True):
     """Display welcome message and Plex logo, clearing the screen first."""
     clear_screen()
-    print()
-    print_plex_logo_ascii()
-    print(PLEX_YELLOW + f"\n{emojis.MOVIE} Welcome to the Plex Toolkit!\n")
+    if show_logo:
+        print()
+        print_plex_logo_ascii()
+        print(PLEX_YELLOW + f"\n{emojis.MOVIE} Welcome to the Plex Toolkit!\n")
+    else:
+        # Compact header without ASCII art
+        print(PLEX_YELLOW + f"\n{emojis.MOVIE} Plex Toolkit\n" + Fore.RESET)
 
 
 def check_system_requirements():
@@ -162,57 +166,87 @@ def check_system_requirements():
         pass
 
 
-def check_credentials():
+def check_credentials(compact=False):
     # Check and display the status of the loaded credentials.
     # Shows which credentials are set using colour and emoji indicators.
     current_config = load_config()
-    print(Fore.GREEN + f"{emojis.KEY} Loaded Credentials:")
-    print(
-        f"Plex Token: {emojis.CHECK if current_config.get(constants.CONFIG_PLEX_TOKEN, '').strip() else emojis.CROSS}"
-    )
-    print(
-        f"Plex URL: {emojis.CHECK if current_config.get(constants.CONFIG_PLEX_URL, '').strip() else emojis.CROSS}"
-    )
-    print(
-        f"TMDb API Key: {emojis.CHECK if current_config.get(constants.CONFIG_TMDB_API_KEY, '').strip() else emojis.CROSS}"
-    )
-    plex_library = (
-        current_config.get(constants.CONFIG_PLEX_LIBRARY, "").strip()
-        or constants.DEFAULT_LIBRARY_NAME
-    )
-    print(f"Plex Library: {emojis.CHECK} {plex_library}\n")
+
+    if compact:
+        # Compact single-line version
+        token_status = emojis.CHECK if current_config.get(constants.CONFIG_PLEX_TOKEN, '').strip() else emojis.CROSS
+        url_status = emojis.CHECK if current_config.get(constants.CONFIG_PLEX_URL, '').strip() else emojis.CROSS
+        tmdb_status = emojis.CHECK if current_config.get(constants.CONFIG_TMDB_API_KEY, '').strip() else emojis.CROSS
+        plex_library = (
+            current_config.get(constants.CONFIG_PLEX_LIBRARY, "").strip()
+            or constants.DEFAULT_LIBRARY_NAME
+        )
+        print(
+            Fore.LIGHTBLACK_EX
+            + f"{emojis.KEY} Plex: Token {token_status} URL {url_status} | TMDb: {tmdb_status} | Library: {plex_library}"
+            + Fore.RESET
+            + "\n"
+        )
+    else:
+        # Full version
+        print(Fore.GREEN + f"{emojis.KEY} Loaded Credentials:")
+        print(
+            f"Plex Token: {emojis.CHECK if current_config.get(constants.CONFIG_PLEX_TOKEN, '').strip() else emojis.CROSS}"
+        )
+        print(
+            f"Plex URL: {emojis.CHECK if current_config.get(constants.CONFIG_PLEX_URL, '').strip() else emojis.CROSS}"
+        )
+        print(
+            f"TMDb API Key: {emojis.CHECK if current_config.get(constants.CONFIG_TMDB_API_KEY, '').strip() else emojis.CROSS}"
+        )
+        plex_library = (
+            current_config.get(constants.CONFIG_PLEX_LIBRARY, "").strip()
+            or constants.DEFAULT_LIBRARY_NAME
+        )
+        print(f"Plex Library: {emojis.CHECK} {plex_library}\n")
 
 
-def handle_main_menu() -> str:
+def handle_main_menu(compact=False) -> str:
     """Displays the main menu and returns the user's selection."""
     menu = MenuBuilder(
         title="MAIN MENU",
         title_emoji=emojis.CLAPPER,
         title_color=PLEX_YELLOW,
-        footer=f"{emojis.INFO}  You can return to this menu after each collection is created.",
+        footer=f"{emojis.INFO}  Return to this menu after each operation." if compact else f"{emojis.INFO}  You can return to this menu after each collection is created.",
     )
-    menu.add_option(
-        "1",
-        "Franchise / Series (e.g. Star Wars, Harry Potter)",
-        emoji=emojis.FRANCHISE,
-        color=Fore.GREEN,
-    )
-    menu.add_option(
-        "2",
-        "Studio / Collections (e.g. A24, Pixar)",
-        emoji=emojis.STUDIO,
-        color=Fore.GREEN,
-    )
-    menu.add_option("3", "Manual Entry", emoji=emojis.MANUAL, color=Fore.GREEN)
-    menu.add_option(
-        "4", "Missing Movies Scanner", emoji=emojis.FRANCHISE, color=Fore.GREEN
-    )
-    menu.add_option(
-        "5", "Fix Posters & Backgrounds", emoji=emojis.ART, color=Fore.YELLOW
-    )
-    menu.add_option(
-        "6", "Settings & Credentials", emoji=emojis.CONFIGURE, color=Fore.YELLOW
-    )
+
+    if compact:
+        # Shorter, more concise descriptions
+        menu.add_option("1", "Franchise / Series", emoji=emojis.FRANCHISE, color=Fore.GREEN)
+        menu.add_option("2", "Studio / Collections", emoji=emojis.STUDIO, color=Fore.GREEN)
+        menu.add_option("3", "Manual Entry", emoji=emojis.MANUAL, color=Fore.GREEN)
+        menu.add_option("4", "Missing Movies Scanner", emoji=emojis.FRANCHISE, color=Fore.GREEN)
+        menu.add_option("5", "Fix Posters & Backgrounds", emoji=emojis.ART, color=Fore.YELLOW)
+        menu.add_option("6", "Settings & Credentials", emoji=emojis.CONFIGURE, color=Fore.YELLOW)
+    else:
+        # Full descriptions with examples
+        menu.add_option(
+            "1",
+            "Franchise / Series (e.g. Star Wars, Harry Potter)",
+            emoji=emojis.FRANCHISE,
+            color=Fore.GREEN,
+        )
+        menu.add_option(
+            "2",
+            "Studio / Collections (e.g. A24, Pixar)",
+            emoji=emojis.STUDIO,
+            color=Fore.GREEN,
+        )
+        menu.add_option("3", "Manual Entry", emoji=emojis.MANUAL, color=Fore.GREEN)
+        menu.add_option(
+            "4", "Missing Movies Scanner", emoji=emojis.FRANCHISE, color=Fore.GREEN
+        )
+        menu.add_option(
+            "5", "Fix Posters & Backgrounds", emoji=emojis.ART, color=Fore.YELLOW
+        )
+        menu.add_option(
+            "6", "Settings & Credentials", emoji=emojis.CONFIGURE, color=Fore.YELLOW
+        )
+
     menu.add_option("7", "Exit", emoji=emojis.EXIT, color=Fore.RED)
     menu.display()
 
@@ -458,8 +492,8 @@ def run_collection_builder():
     # Returns to main menu with `continue`.
 
     while True:
-        welcome()
-        check_credentials()
+        welcome(show_logo=True)  # Always show ASCII art
+        check_credentials(compact=True)  # Always use compact credentials
 
         # Initialize TMDb helper early so it's available for tools
         tmdb = (
@@ -468,7 +502,7 @@ def run_collection_builder():
             else None
         )
 
-        mode = handle_main_menu()
+        mode = handle_main_menu(compact=True)  # Always use compact menu
 
         if mode not in ("1", "2", "3", "4", "5", "6", "7"):
             print("Invalid selection. Please choose a valid menu option (1-7).")
