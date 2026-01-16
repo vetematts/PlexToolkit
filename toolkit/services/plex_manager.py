@@ -2,6 +2,7 @@ from plexapi.server import PlexServer
 from plexapi.exceptions import NotFound, Unauthorized
 import requests
 from toolkit import emojis
+from toolkit import constants
 
 
 class PlexManager:
@@ -55,7 +56,10 @@ class PlexManager:
         Helper to set TMDb artwork.
         image_type: 'poster' (internal 'thumb') or 'background' (internal 'art')
         """
-        field_map = {"poster": "thumb", "background": "art"}
+        field_map = {
+            constants.PLEX_IMAGE_POSTER: constants.PLEX_FIELD_THUMB,
+            constants.PLEX_IMAGE_BACKGROUND: constants.PLEX_FIELD_ART,
+        }
         field = field_map.get(image_type)
 
         if not field:
@@ -69,7 +73,11 @@ class PlexManager:
                 return
 
             # Fetch assets dynamically
-            assets = item.posters() if image_type == "poster" else item.arts()
+            assets = (
+                item.posters()
+                if image_type == constants.PLEX_IMAGE_POSTER
+                else item.arts()
+            )
 
             if not assets:
                 print(f"  - {emojis.CROSS} No {image_type}s found for '{item.title}'.")
@@ -93,11 +101,11 @@ class PlexManager:
             )
 
     def set_tmdb_poster(self, item, include_locked=False):
-        self._set_tmdb_image(item, "poster", include_locked)
+        self._set_tmdb_image(item, constants.PLEX_IMAGE_POSTER, include_locked)
         # If it's a TV Show, also process the seasons
         if item.type == "show":
             for season in item.seasons():
-                self._set_tmdb_image(season, "poster", include_locked)
+                self._set_tmdb_image(season, constants.PLEX_IMAGE_POSTER, include_locked)
 
     def set_tmdb_art(self, item, include_locked=False):
-        self._set_tmdb_image(item, "background", include_locked)
+        self._set_tmdb_image(item, constants.PLEX_IMAGE_BACKGROUND, include_locked)

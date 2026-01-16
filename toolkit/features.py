@@ -316,8 +316,12 @@ def run_studio_mode(tmdb, config, pause_fn):
             + f" {emojis.MOVIE} Search Local Plex Library\n"
         )
         try:
-            pm = PlexManager(config.get("PLEX_TOKEN"), config.get("PLEX_URL"))
-            library = pm.get_movie_library(config.get("PLEX_LIBRARY", "Movies"))
+            pm = PlexManager(
+                config.get(constants.CONFIG_PLEX_TOKEN), config.get(constants.CONFIG_PLEX_URL)
+            )
+            library = pm.get_movie_library(
+                config.get(constants.CONFIG_PLEX_LIBRARY, constants.DEFAULT_LIBRARY_NAME)
+            )
             if not library:
                 return None, None, False, None
 
@@ -431,8 +435,12 @@ def run_missing_movies_tool(tmdb, config, pause_fn):
 
     # 2. Get Current Titles from Plex
     print(f"\n{emojis.INFO} Scanning Plex library (this may take a moment)...")
-    pm = PlexManager(config.get("PLEX_TOKEN"), config.get("PLEX_URL"))
-    library = pm.get_movie_library(config.get("PLEX_LIBRARY", "Movies"))
+    pm = PlexManager(
+        config.get(constants.CONFIG_PLEX_TOKEN), config.get(constants.CONFIG_PLEX_URL)
+    )
+    library = pm.get_movie_library(
+        config.get(constants.CONFIG_PLEX_LIBRARY, constants.DEFAULT_LIBRARY_NAME)
+    )
     if not library:
         pause_fn()
         return
@@ -503,8 +511,12 @@ def run_poster_tool(config, pause_fn):
         return
 
     try:
-        pm = PlexManager(config.get("PLEX_TOKEN"), config.get("PLEX_URL"))
-        library = pm.get_movie_library(config.get("PLEX_LIBRARY", "Movies"))
+        pm = PlexManager(
+            config.get(constants.CONFIG_PLEX_TOKEN), config.get(constants.CONFIG_PLEX_URL)
+        )
+        library = pm.get_movie_library(
+            config.get(constants.CONFIG_PLEX_LIBRARY, constants.DEFAULT_LIBRARY_NAME)
+        )
         if not library:
             return
 

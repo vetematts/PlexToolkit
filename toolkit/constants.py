@@ -1,3 +1,27 @@
+# Configuration keys
+CONFIG_PLEX_TOKEN = "PLEX_TOKEN"
+CONFIG_PLEX_URL = "PLEX_URL"
+CONFIG_PLEX_LIBRARY = "PLEX_LIBRARY"
+CONFIG_TMDB_API_KEY = "TMDB_API_KEY"
+CONFIG_PLEX_LAST_TESTED = "PLEX_LAST_TESTED"
+CONFIG_TMDB_LAST_TESTED = "TMDB_LAST_TESTED"
+
+# Default values
+DEFAULT_LIBRARY_NAME = "Movies"
+
+# Plex library types
+PLEX_LIBTYPE_COLLECTION = "collection"
+PLEX_MEDIA_TYPE_MOVIE = 1
+
+# Plex image field mappings
+PLEX_IMAGE_POSTER = "poster"
+PLEX_IMAGE_BACKGROUND = "background"
+PLEX_FIELD_THUMB = "thumb"
+PLEX_FIELD_ART = "art"
+
+# Collection attributes
+COLLECTION_ATTR_SMART = "smart"
+
 WIKIPEDIA_URLS = {
     "A24": "https://en.wikipedia.org/wiki/List_of_A24_films",
     "Academy Award Best Picture Winners": "https://en.wikipedia.org/wiki/Academy_Award_for_Best_Picture",

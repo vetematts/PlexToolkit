@@ -3,6 +3,7 @@ import requests
 from urllib.parse import urlencode
 from colorama import Fore
 from toolkit import emojis
+from toolkit import constants
 from toolkit.services.plex_manager import PlexManager
 from toolkit.utils import (
     extract_title_and_year,
@@ -95,7 +96,7 @@ def _create_smart_collection_fallback(library, collection_name, smart_filter):
     section_id = library.key
 
     # Prepare filter params (ensure type=1 for movies)
-    filter_params = {"type": 1}
+    filter_params = {"type": constants.PLEX_MEDIA_TYPE_MOVIE}
     filter_params.update(smart_filter)
 
     # Construct the internal URI for the filter
@@ -113,7 +114,7 @@ def _create_smart_collection_fallback(library, collection_name, smart_filter):
         "title": collection_name,
         "smart": 1,
         "sectionId": section_id,
-        "type": 1,
+        "type": constants.PLEX_MEDIA_TYPE_MOVIE,
         "uri": server_uri,
     }
 
@@ -133,14 +134,14 @@ def _process_smart_collection(library, collection_name, smart_filter, pause_fn):
     print(f"\n{emojis.INFO} Creating Smart Collection with filter: {smart_filter}")
 
     # Check if it exists
-    existing = library.search(title=collection_name, libtype="collection")
+    existing = library.search(title=collection_name, libtype=constants.PLEX_LIBTYPE_COLLECTION)
     if existing:
         print(
             Fore.YELLOW
             + f"\n{emojis.INFO} Collection '{collection_name}' already exists."
             + Fore.RESET
         )
-        is_smart = getattr(existing[0], "smart", False)
+        is_smart = getattr(existing[0], constants.COLLECTION_ATTR_SMART, False)
         type_label = "Smart" if is_smart else "Static"
         print(
             Fore.LIGHTBLACK_EX
@@ -199,7 +200,9 @@ def _handle_existing_collection(library, collection_name, found_movies, pause_fn
     Returns 'proceed' if the caller should create a new collection (or overwrite).
     Returns 'stop' if the action is complete (appended) or cancelled.
     """
-    existing_collections = library.search(title=collection_name, libtype="collection")
+    existing_collections = library.search(
+        title=collection_name, libtype=constants.PLEX_LIBTYPE_COLLECTION
+    )
     existing_collection = next(
         (c for c in existing_collections if c.title.lower() == collection_name.lower()),
         None,
@@ -208,7 +211,7 @@ def _handle_existing_collection(library, collection_name, found_movies, pause_fn
     if not existing_collection:
         return "proceed"
 
-    is_smart = getattr(existing_collection, "smart", False)
+    is_smart = getattr(existing_collection, constants.COLLECTION_ATTR_SMART, False)
     type_label = "Smart" if is_smart else "Static"
     print(
         Fore.YELLOW
@@ -312,8 +315,8 @@ def process_and_create_collection(
     collection_name, items, config, pause_fn, is_pre_matched=False, smart_filter=None
 ):
     """Connects to Plex, finds movies, and creates the collection."""
-    plex_token = config.get("PLEX_TOKEN")
-    plex_url = config.get("PLEX_URL")
+    plex_token = config.get(constants.CONFIG_PLEX_TOKEN)
+    plex_url = config.get(constants.CONFIG_PLEX_URL)
     if not plex_token or not plex_url:
         print(Fore.RED + f"\n{emojis.CROSS} Missing or invalid Plex Token or URL.")
         pause_fn()
@@ -321,7 +324,9 @@ def process_and_create_collection(
 
     try:
         plex_manager = PlexManager(plex_token, plex_url)
-        library_name = (config.get("PLEX_LIBRARY") or "Movies").strip() or "Movies"
+        library_name = (
+            config.get(constants.CONFIG_PLEX_LIBRARY) or constants.DEFAULT_LIBRARY_NAME
+        ).strip() or constants.DEFAULT_LIBRARY_NAME
         library = plex_manager.get_movie_library(library_name)
         if not library:
             raise ConnectionError(f"Movie library '{library_name}' not found.")

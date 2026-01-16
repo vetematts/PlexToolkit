@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 
 from colorama import init, Fore
 from toolkit import emojis
+from toolkit import constants
 from toolkit.services.plex_manager import PlexManager
 from toolkit.services.tmdb_search import TMDbSearch
 from toolkit.styling import print_plex_logo_ascii, PLEX_YELLOW
@@ -51,9 +52,11 @@ def test_plex_connection(cfg):
     Attempts to connect to Plex and access the configured movie library.
     Returns True on success, False otherwise.
     """
-    plex_token = cfg.get("PLEX_TOKEN", "").strip()
-    plex_url = cfg.get("PLEX_URL", "").strip()
-    library_name = (cfg.get("PLEX_LIBRARY") or "Movies").strip() or "Movies"
+    plex_token = cfg.get(constants.CONFIG_PLEX_TOKEN, "").strip()
+    plex_url = cfg.get(constants.CONFIG_PLEX_URL, "").strip()
+    library_name = (
+        cfg.get(constants.CONFIG_PLEX_LIBRARY) or constants.DEFAULT_LIBRARY_NAME
+    ).strip() or constants.DEFAULT_LIBRARY_NAME
 
     if not plex_token or not plex_url:
         print(
@@ -75,7 +78,7 @@ def test_plex_connection(cfg):
             Fore.GREEN
             + f"{emojis.CHECK} Plex connection successful. Library '{library_name}' is available.\n"
         )
-        cfg["PLEX_LAST_TESTED"] = _now_iso()
+        cfg[constants.CONFIG_PLEX_LAST_TESTED] = _now_iso()
         save_config(cfg)
         return True
     except Exception as e:
@@ -88,7 +91,7 @@ def test_tmdb_connection(cfg):
     Attempts a lightweight TMDb call to validate the API key.
     Returns True on success, False otherwise.
     """
-    api_key = cfg.get("TMDB_API_KEY", "").strip()
+    api_key = cfg.get(constants.CONFIG_TMDB_API_KEY, "").strip()
     if not api_key:
         print(
             Fore.YELLOW
@@ -101,7 +104,7 @@ def test_tmdb_connection(cfg):
         # Perform a minimal search to validate the key.
         tmdb.search_movies("test", limit=1)
         print(Fore.GREEN + f"{emojis.CHECK} TMDb connection successful.\n")
-        cfg["TMDB_LAST_TESTED"] = _now_iso()
+        cfg[constants.CONFIG_TMDB_LAST_TESTED] = _now_iso()
         save_config(cfg)
         return True
     except Exception as e:
@@ -114,17 +117,17 @@ init(autoreset=True)
 config = load_config()
 
 # Allow Environment Variables to override config file (useful for Docker/CI)
-PLEX_TOKEN = os.getenv("PLEX_TOKEN", config.get("PLEX_TOKEN"))
-PLEX_URL = os.getenv("PLEX_URL", config.get("PLEX_URL"))
-TMDB_API_KEY = os.getenv("TMDB_API_KEY", config.get("TMDB_API_KEY"))
+PLEX_TOKEN = os.getenv("PLEX_TOKEN", config.get(constants.CONFIG_PLEX_TOKEN))
+PLEX_URL = os.getenv("PLEX_URL", config.get(constants.CONFIG_PLEX_URL))
+TMDB_API_KEY = os.getenv("TMDB_API_KEY", config.get(constants.CONFIG_TMDB_API_KEY))
 
 # Update config object so the rest of the app uses the active credentials
 if PLEX_TOKEN:
-    config["PLEX_TOKEN"] = PLEX_TOKEN
+    config[constants.CONFIG_PLEX_TOKEN] = PLEX_TOKEN
 if PLEX_URL:
-    config["PLEX_URL"] = PLEX_URL
+    config[constants.CONFIG_PLEX_URL] = PLEX_URL
 if TMDB_API_KEY:
-    config["TMDB_API_KEY"] = TMDB_API_KEY
+    config[constants.CONFIG_TMDB_API_KEY] = TMDB_API_KEY
 
 
 def welcome():
@@ -165,15 +168,18 @@ def check_credentials():
     current_config = load_config()
     print(Fore.GREEN + f"{emojis.KEY} Loaded Credentials:")
     print(
-        f"Plex Token: {emojis.CHECK if current_config.get('PLEX_TOKEN', '').strip() else emojis.CROSS}"
+        f"Plex Token: {emojis.CHECK if current_config.get(constants.CONFIG_PLEX_TOKEN, '').strip() else emojis.CROSS}"
     )
     print(
-        f"Plex URL: {emojis.CHECK if current_config.get('PLEX_URL', '').strip() else emojis.CROSS}"
+        f"Plex URL: {emojis.CHECK if current_config.get(constants.CONFIG_PLEX_URL, '').strip() else emojis.CROSS}"
     )
     print(
-        f"TMDb API Key: {emojis.CHECK if current_config.get('TMDB_API_KEY', '').strip() else emojis.CROSS}"
+        f"TMDb API Key: {emojis.CHECK if current_config.get(constants.CONFIG_TMDB_API_KEY, '').strip() else emojis.CROSS}"
     )
-    plex_library = current_config.get("PLEX_LIBRARY", "").strip() or "Movies"
+    plex_library = (
+        current_config.get(constants.CONFIG_PLEX_LIBRARY, "").strip()
+        or constants.DEFAULT_LIBRARY_NAME
+    )
     print(f"Plex Library: {emojis.CHECK} {plex_library}\n")
 
 
@@ -295,7 +301,7 @@ def handle_credentials_menu():
             break
         if choice == "1":
             _prompt_update_config(
-                "PLEX_TOKEN",
+                constants.CONFIG_PLEX_TOKEN,
                 "Enter new Plex Token (Esc to cancel): ",
                 Fore.YELLOW + "1." + Fore.RESET + f" {emojis.KEY} Set Plex Token",
                 "To find your token, view the XML of any item on Plex Web:\n"
@@ -306,7 +312,7 @@ def handle_credentials_menu():
         elif choice == "2":
 
             _prompt_update_config(
-                "PLEX_URL",
+                constants.CONFIG_PLEX_URL,
                 "Enter new Plex URL (Esc to cancel): ",
                 Fore.YELLOW + "2." + Fore.RESET + f" {emojis.URL} Set Plex URL",
                 "You can find your Plex URL under Settings > Remote Access here:\n"
@@ -317,7 +323,7 @@ def handle_credentials_menu():
             )
         elif choice == "3":
             _prompt_update_config(
-                "TMDB_API_KEY",
+                constants.CONFIG_TMDB_API_KEY,
                 "Enter new TMDb API Key (Esc to cancel): ",
                 Fore.BLUE + "3." + Fore.RESET + f" {emojis.CLAPPER} Set TMDb API Key",
                 "You can generate an API Key in your account settings:\n"
@@ -341,8 +347,8 @@ def handle_credentials_menu():
             )
 
             # Try to fetch libraries from Plex to allow selection
-            plex_token = config.get("PLEX_TOKEN")
-            plex_url = config.get("PLEX_URL")
+            plex_token = config.get(constants.CONFIG_PLEX_TOKEN)
+            plex_url = config.get(constants.CONFIG_PLEX_URL)
             available_libs = []
 
             if plex_token and plex_url:
@@ -353,7 +359,9 @@ def handle_credentials_menu():
                 except Exception:
                     pass
 
-            current_library = config.get("PLEX_LIBRARY", "Movies")
+            current_library = config.get(
+                constants.CONFIG_PLEX_LIBRARY, constants.DEFAULT_LIBRARY_NAME
+            )
             if available_libs:
                 print_grid(
                     available_libs,
@@ -380,7 +388,7 @@ def handle_credentials_menu():
                 )
                 pause()
                 continue
-            config["PLEX_LIBRARY"] = new_library
+            config[constants.CONFIG_PLEX_LIBRARY] = new_library
             save_config(config)
             print()
             test_plex_connection(config)
@@ -402,16 +410,20 @@ def handle_credentials_menu():
                 )
                 print(f"{emoji} {Fore.WHITE}{label:<18}{Fore.RESET} : {val_str}")
 
-            _print_kv(emojis.KEY, "Plex Token", config.get("PLEX_TOKEN"))
-            _print_kv(emojis.URL, "Plex URL", config.get("PLEX_URL"))
-            _print_kv(emojis.CLAPPER, "TMDb API Key", config.get("TMDB_API_KEY"))
+            _print_kv(emojis.KEY, "Plex Token", config.get(constants.CONFIG_PLEX_TOKEN))
+            _print_kv(emojis.URL, "Plex URL", config.get(constants.CONFIG_PLEX_URL))
             _print_kv(
-                emojis.MOVIE, "Plex Library", config.get("PLEX_LIBRARY") or "Movies"
+                emojis.CLAPPER, "TMDb API Key", config.get(constants.CONFIG_TMDB_API_KEY)
+            )
+            _print_kv(
+                emojis.MOVIE,
+                "Plex Library",
+                config.get(constants.CONFIG_PLEX_LIBRARY) or constants.DEFAULT_LIBRARY_NAME,
             )
 
             print(Fore.LIGHTBLACK_EX + "\n--- Connection Status ---" + Fore.RESET)
-            last_plex = config.get("PLEX_LAST_TESTED", "")
-            last_tmdb = config.get("TMDB_LAST_TESTED", "")
+            last_plex = config.get(constants.CONFIG_PLEX_LAST_TESTED, "")
+            last_tmdb = config.get(constants.CONFIG_TMDB_LAST_TESTED, "")
 
             _print_kv(
                 emojis.INFO,
@@ -448,8 +460,8 @@ def run_collection_builder():
 
         # Initialize TMDb helper early so it's available for tools
         tmdb = (
-            TMDbSearch(config.get("TMDB_API_KEY"))
-            if config.get("TMDB_API_KEY")
+            TMDbSearch(config.get(constants.CONFIG_TMDB_API_KEY))
+            if config.get(constants.CONFIG_TMDB_API_KEY)
             else None
         )
 
