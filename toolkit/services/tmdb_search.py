@@ -60,7 +60,6 @@ class TMDbSearch:
 
         all_titles = set()
         total_pages = 0
-        pages_fetched = 0
 
         # First pass: determine total pages for progress bar
         for query_params in queries:
