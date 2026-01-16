@@ -18,6 +18,7 @@ from toolkit import emojis
 from toolkit.services.plex_manager import PlexManager
 from toolkit.services.tmdb_search import TMDbSearch
 from toolkit.styling import print_plex_logo_ascii, PLEX_YELLOW
+from toolkit.menu_builder import MenuBuilder
 from toolkit import features
 from toolkit import ops
 from toolkit.utils import (
@@ -178,38 +179,38 @@ def check_credentials():
 
 def handle_main_menu() -> str:
     """Displays the main menu and returns the user's selection."""
-    print(PLEX_YELLOW + f"{emojis.CLAPPER} MAIN MENU:\n")
-    print(
-        Fore.GREEN
-        + "1."
-        + Fore.RESET
-        + f" {emojis.FRANCHISE} Franchise / Series (e.g. Star Wars, Harry Potter)\n"
+    menu = MenuBuilder(
+        title="MAIN MENU",
+        title_emoji=emojis.CLAPPER,
+        title_color=PLEX_YELLOW,
+        footer=f"{emojis.INFO}  You can return to this menu after each collection is created.",
     )
-    print(
-        Fore.GREEN
-        + "2."
-        + Fore.RESET
-        + f" {emojis.STUDIO}  Studio / Collections (e.g. A24, Pixar)\n"
+    menu.add_option(
+        "1",
+        "Franchise / Series (e.g. Star Wars, Harry Potter)",
+        emoji=emojis.FRANCHISE,
+        color=Fore.GREEN,
     )
-    print(Fore.GREEN + "3." + Fore.RESET + f" {emojis.MANUAL} Manual Entry\n")
-    print(
-        Fore.GREEN + "4." + Fore.RESET + f" {emojis.FRANCHISE} Missing Movies Scanner\n"
+    menu.add_option(
+        "2",
+        "Studio / Collections (e.g. A24, Pixar)",
+        emoji=emojis.STUDIO,
+        color=Fore.GREEN,
     )
-    print(
-        Fore.YELLOW + "5." + Fore.RESET + f" {emojis.ART} Fix Posters & Backgrounds\n"
+    menu.add_option("3", "Manual Entry", emoji=emojis.MANUAL, color=Fore.GREEN)
+    menu.add_option(
+        "4", "Missing Movies Scanner", emoji=emojis.FRANCHISE, color=Fore.GREEN
     )
-    print(
-        Fore.YELLOW
-        + "6."
-        + Fore.RESET
-        + f" {emojis.CONFIGURE} Settings & Credentials\n"
+    menu.add_option(
+        "5", "Fix Posters & Backgrounds", emoji=emojis.ART, color=Fore.YELLOW
     )
-    print(Fore.RED + "7." + Fore.RESET + f" {emojis.EXIT} Exit\n")
-    print(
-        Fore.LIGHTBLACK_EX
-        + f"{emojis.INFO}  You can return to this menu after each collection is created.\n"
+    menu.add_option(
+        "6", "Settings & Credentials", emoji=emojis.CONFIGURE, color=Fore.YELLOW
     )
-    mode = read_menu_choice("Select an option (Esc to exit): ", set("1234567"))
+    menu.add_option("7", "Exit", emoji=emojis.EXIT, color=Fore.RED)
+    menu.display()
+
+    mode = read_menu_choice("Select an option (Esc to exit): ", menu.get_valid_choices())
     if mode == "ESC":
         return "7"
     return mode
@@ -266,22 +267,23 @@ def handle_credentials_menu():
     while True:
         clear_screen()
         print()
-        print(PLEX_YELLOW + f"{emojis.CONFIGURE} CONFIGURE CREDENTIALS\n")
-        print(Fore.YELLOW + "1." + Fore.RESET + f" {emojis.KEY} Set Plex Token\n")
-        print(Fore.YELLOW + "2." + Fore.RESET + f" {emojis.URL} Set Plex URL\n")
-        print(Fore.BLUE + "3." + Fore.RESET + f" {emojis.CLAPPER} Set TMDb API Key\n")
-        print(
-            Fore.CYAN + "4." + Fore.RESET + f" {emojis.MOVIE} Set Plex Library Name\n"
+        menu = MenuBuilder(
+            title="CONFIGURE CREDENTIALS",
+            title_emoji=emojis.CONFIGURE,
+            title_color=PLEX_YELLOW,
         )
-        print(
-            Fore.GREEN
-            + "5."
-            + Fore.RESET
-            + f" {emojis.INFO}  Test Connections (Plex + TMDb)\n"
+        menu.add_option("1", "Set Plex Token", emoji=emojis.KEY, color=Fore.YELLOW)
+        menu.add_option("2", "Set Plex URL", emoji=emojis.URL, color=Fore.YELLOW)
+        menu.add_option("3", "Set TMDb API Key", emoji=emojis.CLAPPER, color=Fore.BLUE)
+        menu.add_option("4", "Set Plex Library Name", emoji=emojis.MOVIE, color=Fore.CYAN)
+        menu.add_option(
+            "5", "Test Connections (Plex + TMDb)", emoji=emojis.INFO, color=Fore.GREEN
         )
-        print(Fore.GREEN + "6." + Fore.RESET + f" {emojis.BOOK} Show current values\n")
-        print(Fore.RED + "7." + Fore.RESET + f" {emojis.BACK} Return to main menu\n")
-        choice = read_menu_choice("Select an option (Esc to go back): ", set("1234567"))
+        menu.add_option("6", "Show current values", emoji=emojis.BOOK, color=Fore.GREEN)
+        menu.add_option("7", "Return to main menu", emoji=emojis.BACK, color=Fore.RED)
+        menu.display()
+
+        choice = read_menu_choice("Select an option (Esc to go back): ", menu.get_valid_choices())
 
         if choice == "ESC" or choice == "7":
             break

@@ -2,6 +2,7 @@ from collections import Counter
 from colorama import Fore
 from toolkit import emojis
 from toolkit import constants
+from toolkit.menu_builder import MenuBuilder
 from toolkit.services import scraper
 from toolkit.services.plex_manager import PlexManager
 from toolkit.utils import (
@@ -259,41 +260,39 @@ def run_studio_mode(tmdb, config, pause_fn):
     """Handles the studio/keyword mode."""
     clear_screen()
     print()
-    print(Fore.YELLOW + f"{emojis.STUDIO}  Studio / Collection Mode\n")
-    print(
-        Fore.LIGHTBLACK_EX
-        + "Create collections by Studio (e.g. A24, Pixar), Network (e.g. HBO, Netflix), or Universe (e.g. MCU, DCEU)."
-        + Fore.RESET
-        + "\n"
-    )
-    print(Fore.GREEN + "1." + Fore.RESET + f" {emojis.URL} Discover via TMDb API\n")
-
     bs4_avail = scraper.BeautifulSoup is not None
+
+    menu = MenuBuilder(
+        title="Studio / Collection Mode",
+        title_emoji=emojis.STUDIO,
+        title_color=Fore.YELLOW,
+        footer="Create collections by Studio (e.g. A24, Pixar), Network (e.g. HBO, Netflix), or Universe (e.g. MCU, DCEU).",
+    )
+    menu.add_option("1", "Discover via TMDb API", emoji=emojis.URL, color=Fore.GREEN)
     if bs4_avail:
-        print(
-            Fore.GREEN
-            + "2."
-            + Fore.RESET
-            + f" {emojis.BOOK} Import from Online Lists (Wikipedia/Criterion)\n"
+        menu.add_option(
+            "2",
+            "Import from Online Lists (Wikipedia/Criterion)",
+            emoji=emojis.BOOK,
+            color=Fore.GREEN,
         )
     else:
-        print(
-            Fore.LIGHTBLACK_EX
-            + f"2. {emojis.BOOK} Import from Online Lists (Install 'beautifulsoup4' to enable)\n"
+        menu.add_option(
+            "2",
+            "Import from Online Lists (Install 'beautifulsoup4' to enable)",
+            emoji=emojis.BOOK,
+            color=Fore.LIGHTBLACK_EX,
+            enabled=False,
         )
-    print(
-        Fore.GREEN + "3." + Fore.RESET + f" {emojis.MOVIE} Search Local Plex Library\n"
+    menu.add_option(
+        "3", "Search Local Plex Library", emoji=emojis.MOVIE, color=Fore.GREEN
     )
-    print(
-        Fore.GREEN
-        + "4."
-        + Fore.RESET
-        + f" {emojis.FRANCHISE} Use Built-in Lists (Offline)\n"
+    menu.add_option(
+        "4", "Use Built-in Lists (Offline)", emoji=emojis.FRANCHISE, color=Fore.GREEN
     )
+    menu.display()
 
-    mode = read_menu_choice(
-        "Select a method (Esc to cancel): ", set("1234") if bs4_avail else set("134")
-    )
+    mode = read_menu_choice("Select a method (Esc to cancel): ", menu.get_valid_choices())
     if mode == "ESC" or mode is None:
         return None, None, False, None
 
@@ -486,21 +485,18 @@ def run_poster_tool(config, pause_fn):
     """Sub-menu for fixing posters."""
     clear_screen()
     print()
-    print(Fore.YELLOW + f"{emojis.ART}  Fix Posters & Backgrounds\n")
-    print(
-        Fore.LIGHTBLACK_EX
-        + "This tool scans your library and applies the official TMDb artwork.\n"
-        + "Items with locked (custom) posters or backgrounds will be skipped."
-        + Fore.RESET
-        + "\n"
+    menu = MenuBuilder(
+        title="Fix Posters & Backgrounds",
+        title_emoji=emojis.ART,
+        title_color=Fore.YELLOW,
+        footer="This tool scans your library and applies the official TMDb artwork.\nItems with locked (custom) posters or backgrounds will be skipped.",
     )
-    print(Fore.YELLOW + "1." + Fore.RESET + " Fix Posters for a specific Collection\n")
-    print(
-        Fore.YELLOW + "2." + Fore.RESET + " Fix Posters for the ENTIRE Library (Slow)\n"
-    )
-    print(Fore.RED + "3." + Fore.RESET + f" {emojis.BACK} Return to main menu\n")
+    menu.add_option("1", "Fix Posters for a specific Collection", color=Fore.YELLOW)
+    menu.add_option("2", "Fix Posters for the ENTIRE Library (Slow)", color=Fore.YELLOW)
+    menu.add_option("3", "Return to main menu", emoji=emojis.BACK, color=Fore.RED)
+    menu.display()
 
-    choice = read_menu_choice("Select an option: ", set("123"))
+    choice = read_menu_choice("Select an option: ", menu.get_valid_choices())
     if choice == "3" or choice == "ESC":
         return
 
