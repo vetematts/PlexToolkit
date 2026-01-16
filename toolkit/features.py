@@ -292,7 +292,9 @@ def run_studio_mode(tmdb, config, pause_fn):
     )
     menu.display()
 
-    mode = read_menu_choice("Select a method (Esc to cancel): ", menu.get_valid_choices())
+    mode = read_menu_choice(
+        "Select a method (Esc to cancel): ", menu.get_valid_choices()
+    )
     if mode == "ESC" or mode is None:
         return None, None, False, None
 

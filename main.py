@@ -210,7 +210,9 @@ def handle_main_menu() -> str:
     menu.add_option("7", "Exit", emoji=emojis.EXIT, color=Fore.RED)
     menu.display()
 
-    mode = read_menu_choice("Select an option (Esc to exit): ", menu.get_valid_choices())
+    mode = read_menu_choice(
+        "Select an option (Esc to exit): ", menu.get_valid_choices()
+    )
     if mode == "ESC":
         return "7"
     return mode
@@ -275,7 +277,9 @@ def handle_credentials_menu():
         menu.add_option("1", "Set Plex Token", emoji=emojis.KEY, color=Fore.YELLOW)
         menu.add_option("2", "Set Plex URL", emoji=emojis.URL, color=Fore.YELLOW)
         menu.add_option("3", "Set TMDb API Key", emoji=emojis.CLAPPER, color=Fore.BLUE)
-        menu.add_option("4", "Set Plex Library Name", emoji=emojis.MOVIE, color=Fore.CYAN)
+        menu.add_option(
+            "4", "Set Plex Library Name", emoji=emojis.MOVIE, color=Fore.CYAN
+        )
         menu.add_option(
             "5", "Test Connections (Plex + TMDb)", emoji=emojis.INFO, color=Fore.GREEN
         )
@@ -283,7 +287,9 @@ def handle_credentials_menu():
         menu.add_option("7", "Return to main menu", emoji=emojis.BACK, color=Fore.RED)
         menu.display()
 
-        choice = read_menu_choice("Select an option (Esc to go back): ", menu.get_valid_choices())
+        choice = read_menu_choice(
+            "Select an option (Esc to go back): ", menu.get_valid_choices()
+        )
 
         if choice == "ESC" or choice == "7":
             break
