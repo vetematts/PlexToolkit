@@ -5,6 +5,38 @@ from toolkit import emojis
 from toolkit import constants
 
 
+# Cache for PlexManager instances keyed by (token, base_url)
+_plex_manager_cache = {}
+
+
+def get_plex_manager(token, base_url):
+    """
+    Get or create a cached PlexManager instance.
+
+    This function caches PlexManager instances based on token and URL,
+    so multiple calls with the same credentials reuse the same connection.
+
+    Args:
+        token: Plex authentication token
+        base_url: Plex server base URL
+
+    Returns:
+        PlexManager instance (cached if available)
+    """
+    cache_key = (token, base_url)
+
+    if cache_key not in _plex_manager_cache:
+        _plex_manager_cache[cache_key] = PlexManager(token, base_url)
+
+    return _plex_manager_cache[cache_key]
+
+
+def clear_plex_manager_cache():
+    """Clear the PlexManager cache. Useful for testing or when credentials change."""
+    global _plex_manager_cache
+    _plex_manager_cache.clear()
+
+
 class PlexManager:
     def __init__(self, token, base_url):
         try:

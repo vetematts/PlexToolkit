@@ -5,7 +5,7 @@ from toolkit import constants
 from toolkit.menu_builder import MenuBuilder
 from toolkit.progress import ProgressBar
 from toolkit.services import scraper
-from toolkit.services.plex_manager import PlexManager
+from toolkit.services.plex_manager import get_plex_manager
 from toolkit.utils import (
     read_line,
     read_menu_choice,
@@ -317,7 +317,7 @@ def run_studio_mode(tmdb, config, pause_fn):
             + f" {emojis.MOVIE} Search Local Plex Library\n"
         )
         try:
-            pm = PlexManager(
+            pm = get_plex_manager(
                 config.get(constants.CONFIG_PLEX_TOKEN),
                 config.get(constants.CONFIG_PLEX_URL),
             )
@@ -439,7 +439,7 @@ def run_missing_movies_tool(tmdb, config, pause_fn):
 
     # 2. Get Current Titles from Plex
     print(f"\n{emojis.INFO} Scanning Plex library (this may take a moment)...")
-    pm = PlexManager(
+    pm = get_plex_manager(
         config.get(constants.CONFIG_PLEX_TOKEN), config.get(constants.CONFIG_PLEX_URL)
     )
     library = pm.get_movie_library(
@@ -515,7 +515,7 @@ def run_poster_tool(config, pause_fn):
         return
 
     try:
-        pm = PlexManager(
+        pm = get_plex_manager(
             config.get(constants.CONFIG_PLEX_TOKEN),
             config.get(constants.CONFIG_PLEX_URL),
         )

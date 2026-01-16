@@ -5,7 +5,7 @@ from colorama import Fore
 from toolkit import emojis
 from toolkit import constants
 from toolkit.progress import ProgressBar
-from toolkit.services.plex_manager import PlexManager
+from toolkit.services.plex_manager import get_plex_manager
 from toolkit.utils import (
     extract_title_and_year,
     normalize_title,
@@ -334,7 +334,7 @@ def process_and_create_collection(
         return
 
     try:
-        plex_manager = PlexManager(plex_token, plex_url)
+        plex_manager = get_plex_manager(plex_token, plex_url)
         library_name = (
             config.get(constants.CONFIG_PLEX_LIBRARY) or constants.DEFAULT_LIBRARY_NAME
         ).strip() or constants.DEFAULT_LIBRARY_NAME

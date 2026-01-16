@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from colorama import init, Fore
 from toolkit import emojis
 from toolkit import constants
-from toolkit.services.plex_manager import PlexManager
+from toolkit.services.plex_manager import get_plex_manager
 from toolkit.services.tmdb_search import TMDbSearch
 from toolkit.styling import print_plex_logo_ascii, PLEX_YELLOW
 from toolkit.menu_builder import MenuBuilder
@@ -66,7 +66,7 @@ def test_plex_connection(cfg):
         return False
 
     try:
-        plex_manager = PlexManager(plex_token, plex_url)
+        plex_manager = get_plex_manager(plex_token, plex_url)
         library = plex_manager.get_movie_library(library_name)
         if not library:
             print(
@@ -353,7 +353,7 @@ def handle_credentials_menu():
 
             if plex_token and plex_url:
                 try:
-                    pm = PlexManager(plex_token, plex_url)
+                    pm = get_plex_manager(plex_token, plex_url)
                     libs = pm.get_all_libraries()
                     available_libs = [lib.title for lib in libs]
                 except Exception:
