@@ -3,6 +3,7 @@ from colorama import Fore
 from toolkit import emojis
 from toolkit import constants
 from toolkit.menu_builder import MenuBuilder
+from toolkit.progress import ProgressBar
 from toolkit.services import scraper
 from toolkit.services.plex_manager import PlexManager
 from toolkit.utils import (
@@ -528,10 +529,30 @@ def run_poster_tool(config, pause_fn):
         if not items_to_process:
             return
 
-        for i, item in enumerate(items_to_process, 1):
-            print(f"[{i}/{len(items_to_process)}] Checking '{item.title}'...")
-            pm.set_tmdb_poster(item)
-            pm.set_tmdb_art(item)
+        # Convert to list to get count (needed for progress bar)
+        # For very large libraries, this might use memory, but we need the count
+        items_list = list(items_to_process)
+        total = len(items_list)
+
+        if total == 0:
+            print(f"{emojis.INFO} No items to process.")
+            pause_fn()
+            return
+
+        print()  # Add a blank line before progress bar
+
+        with ProgressBar(
+            total,
+            prefix=f"{emojis.ART} Fixing artwork",
+            suffix="items processed",
+        ) as progress:
+            for item in items_list:
+                title = getattr(item, "title", str(item))[:40]
+                progress.update(custom_message=f"Processing: {title}")
+                pm.set_tmdb_poster(item)
+                pm.set_tmdb_art(item)
+
+        print(f"\n{emojis.CHECK} Completed processing {total} items.")
     except Exception as e:
         print(Fore.RED + f"Error: {e}")
     pause_fn()

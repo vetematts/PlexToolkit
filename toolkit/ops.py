@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 from colorama import Fore
 from toolkit import emojis
 from toolkit import constants
+from toolkit.progress import ProgressBar
 from toolkit.services.plex_manager import PlexManager
 from toolkit.utils import (
     extract_title_and_year,
@@ -293,23 +294,31 @@ def _match_movies_in_plex(library, items):
     not_found = []
     seen_rating_keys = set()
 
-    print(f"\n{emojis.INFO} Searching Plex for {len(items)} items...")
+    total = len(items)
+    print(f"\n{emojis.INFO} Searching Plex for {total} items...")
 
-    for raw in items:
-        title, _ = extract_title_and_year(raw)
-        try:
-            results = library.search(title)
-            chosen = pick_plex_match(raw, results)
-            if chosen is None:
+    with ProgressBar(
+        total,
+        prefix=f"{emojis.INFO} Matching movies",
+        suffix="items processed",
+    ) as progress:
+        for raw in items:
+            title, _ = extract_title_and_year(raw)
+            progress.update(custom_message=f"Searching: {title[:35]}")
+            try:
+                results = library.search(title)
+                chosen = pick_plex_match(raw, results)
+                if chosen is None:
+                    not_found.append(raw)
+                    continue
+                rating_key = str(getattr(chosen, "ratingKey", ""))
+                if rating_key and rating_key not in seen_rating_keys:
+                    seen_rating_keys.add(rating_key)
+                    found_movies.append(chosen)
+            except Exception as e:
+                print(f"\nError searching for '{raw}': {e}")
                 not_found.append(raw)
-                continue
-            rating_key = str(getattr(chosen, "ratingKey", ""))
-            if rating_key and rating_key not in seen_rating_keys:
-                seen_rating_keys.add(rating_key)
-                found_movies.append(chosen)
-        except Exception as e:
-            print(f"Error searching for '{raw}': {e}")
-            not_found.append(raw)
+
     return found_movies, not_found
 
 

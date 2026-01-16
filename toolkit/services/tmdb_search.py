@@ -1,5 +1,6 @@
 from tmdbv3api import TMDb, Search, Collection
 import requests
+from toolkit.progress import ProgressBar
 
 
 class TMDbSearch:
@@ -58,6 +59,38 @@ class TMDbSearch:
             queries.append({"with_keywords": keyword_id})
 
         all_titles = set()
+        total_pages = 0
+        pages_fetched = 0
+
+        # First pass: determine total pages for progress bar
+        for query_params in queries:
+            current_params = params.copy()
+            current_params.update(query_params)
+            current_params["page"] = 1
+            resp = requests.get(url, params=current_params, timeout=10)
+            if resp.status_code == 401:
+                raise ValueError("TMDb authentication failed (invalid API key).")
+            if resp.status_code != 200:
+                snippet = ""
+                try:
+                    snippet = resp.json().get("status_message", "")
+                except Exception:
+                    snippet = resp.text[:200]
+                raise RuntimeError(f"TMDb error {resp.status_code}: {snippet}")
+            data = resp.json()
+            total_pages += data.get("total_pages", 1)
+
+        # Second pass: fetch all pages with progress bar
+        if total_pages > 1:
+            print(f"\nFetching {total_pages} pages from TMDb...")
+            progress = ProgressBar(
+                total_pages,
+                prefix="TMDb Discovery",
+                suffix="pages fetched",
+                length=40,
+            )
+        else:
+            progress = None
 
         for query_params in queries:
             # Merge base params with specific query params
@@ -66,19 +99,24 @@ class TMDbSearch:
             current_params["page"] = 1
 
             while True:
-                print(
-                    f"Fetching page {current_params['page']}...", end="\r", flush=True
-                )
+                if progress:
+                    progress.update(
+                        custom_message=f"Page {current_params['page']}/{current_params.get('total_pages', '?')}"
+                    )
                 resp = requests.get(url, params=current_params, timeout=10)
                 if resp.status_code == 401:
+                    if progress:
+                        progress.finish()
                     raise ValueError("TMDb authentication failed (invalid API key).")
                 if resp.status_code != 200:
+                    if progress:
+                        progress.finish()
                     snippet = ""
                     try:
                         snippet = resp.json().get("status_message", "")
                     except Exception:
                         snippet = resp.text[:200]
-                        raise RuntimeError(f"TMDb error {resp.status_code}: {snippet}")
+                    raise RuntimeError(f"TMDb error {resp.status_code}: {snippet}")
                 data = resp.json()
                 for m in data.get("results", []):
                     title = m.get("title")
@@ -92,5 +130,6 @@ class TMDbSearch:
                     break
                 current_params["page"] += 1
 
-        print(" " * 40, end="\r", flush=True)
+        if progress:
+            progress.finish(f"Found {len(all_titles)} unique movies.")
         return sorted(list(all_titles))
