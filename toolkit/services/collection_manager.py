@@ -213,12 +213,13 @@ class CollectionManager:
                     + Fore.RESET
                 )
                 try:
-                    self._create_smart_collection_fallback(collection_name, smart_filter)
+                    self._create_smart_collection_fallback(
+                        collection_name, smart_filter
+                    )
                     return True
                 except Exception as fallback_error:
                     print(
-                        Fore.RED
-                        + f"\n{emojis.CROSS} Fallback failed: {fallback_error}"
+                        Fore.RED + f"\n{emojis.CROSS} Fallback failed: {fallback_error}"
                     )
                     print(Fore.RED + "Please run: pip install --upgrade plexapi")
                     return False
@@ -311,9 +312,7 @@ class CollectionManager:
             print(Fore.RED + f"\n{emojis.CROSS} Failed to delete collection: {e}")
             return False
 
-    def handle_existing_collection(
-        self, collection_name, items, pause_fn=pause
-    ):
+    def handle_existing_collection(self, collection_name, items, pause_fn=pause):
         """
         Handle interaction when a collection already exists.
         Prompts user for Append/Overwrite/Cancel.
