@@ -165,6 +165,11 @@ def read_index_or_skip(max_index, prompt):
         print(Fore.RED + "Invalid number." + Fore.RESET)
 
 
+def pause(msg: str = "Press Enter or Esc to return to the menu..."):
+    """Pauses execution and waits for user input (Enter or Esc)."""
+    read_line(msg)
+
+
 def load_fallback_data(section):
     # Load fallback data for a given section from fallback_collections.json.
     fallback_path = os.path.join(

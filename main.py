@@ -26,6 +26,7 @@ from toolkit.utils import (
     print_grid,
     pick_from_list_case_insensitive,
     clear_screen,
+    pause,
 )
 from toolkit.input_handler import InputHandler
 
@@ -216,9 +217,6 @@ def handle_main_menu() -> str:
 
 def handle_credentials_menu():
     """Displays and manages the credentials configuration submenu."""
-
-    def pause(msg: str = "Press Enter or Esc to return to the menu..."):
-        read_line(msg)
 
     def validate_url(url):
         if not url:
@@ -435,9 +433,6 @@ def handle_credentials_menu():
 def run_collection_builder():
     # Main interactive loop. Stays in a single while-loop and avoids repeating run_collection_builder().
     # Returns to main menu with `continue`.
-
-    def pause(msg: str = "Press Enter or Esc to return to the menu..."):
-        read_line(msg)
 
     while True:
         welcome()
