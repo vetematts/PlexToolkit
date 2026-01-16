@@ -105,7 +105,9 @@ class PlexManager:
         # If it's a TV Show, also process the seasons
         if item.type == "show":
             for season in item.seasons():
-                self._set_tmdb_image(season, constants.PLEX_IMAGE_POSTER, include_locked)
+                self._set_tmdb_image(
+                    season, constants.PLEX_IMAGE_POSTER, include_locked
+                )
 
     def set_tmdb_art(self, item, include_locked=False):
         self._set_tmdb_image(item, constants.PLEX_IMAGE_BACKGROUND, include_locked)

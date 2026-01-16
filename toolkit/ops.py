@@ -134,7 +134,9 @@ def _process_smart_collection(library, collection_name, smart_filter, pause_fn):
     print(f"\n{emojis.INFO} Creating Smart Collection with filter: {smart_filter}")
 
     # Check if it exists
-    existing = library.search(title=collection_name, libtype=constants.PLEX_LIBTYPE_COLLECTION)
+    existing = library.search(
+        title=collection_name, libtype=constants.PLEX_LIBTYPE_COLLECTION
+    )
     if existing:
         print(
             Fore.YELLOW

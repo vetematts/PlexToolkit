@@ -413,12 +413,15 @@ def handle_credentials_menu():
             _print_kv(emojis.KEY, "Plex Token", config.get(constants.CONFIG_PLEX_TOKEN))
             _print_kv(emojis.URL, "Plex URL", config.get(constants.CONFIG_PLEX_URL))
             _print_kv(
-                emojis.CLAPPER, "TMDb API Key", config.get(constants.CONFIG_TMDB_API_KEY)
+                emojis.CLAPPER,
+                "TMDb API Key",
+                config.get(constants.CONFIG_TMDB_API_KEY),
             )
             _print_kv(
                 emojis.MOVIE,
                 "Plex Library",
-                config.get(constants.CONFIG_PLEX_LIBRARY) or constants.DEFAULT_LIBRARY_NAME,
+                config.get(constants.CONFIG_PLEX_LIBRARY)
+                or constants.DEFAULT_LIBRARY_NAME,
             )
 
             print(Fore.LIGHTBLACK_EX + "\n--- Connection Status ---" + Fore.RESET)

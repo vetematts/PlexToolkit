@@ -317,10 +317,13 @@ def run_studio_mode(tmdb, config, pause_fn):
         )
         try:
             pm = PlexManager(
-                config.get(constants.CONFIG_PLEX_TOKEN), config.get(constants.CONFIG_PLEX_URL)
+                config.get(constants.CONFIG_PLEX_TOKEN),
+                config.get(constants.CONFIG_PLEX_URL),
             )
             library = pm.get_movie_library(
-                config.get(constants.CONFIG_PLEX_LIBRARY, constants.DEFAULT_LIBRARY_NAME)
+                config.get(
+                    constants.CONFIG_PLEX_LIBRARY, constants.DEFAULT_LIBRARY_NAME
+                )
             )
             if not library:
                 return None, None, False, None
@@ -512,7 +515,8 @@ def run_poster_tool(config, pause_fn):
 
     try:
         pm = PlexManager(
-            config.get(constants.CONFIG_PLEX_TOKEN), config.get(constants.CONFIG_PLEX_URL)
+            config.get(constants.CONFIG_PLEX_TOKEN),
+            config.get(constants.CONFIG_PLEX_URL),
         )
         library = pm.get_movie_library(
             config.get(constants.CONFIG_PLEX_LIBRARY, constants.DEFAULT_LIBRARY_NAME)
