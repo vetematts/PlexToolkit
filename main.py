@@ -174,9 +174,21 @@ def check_credentials(compact=False):
 
     if compact:
         # Compact single-line version
-        token_status = emojis.CHECK if current_config.get(constants.CONFIG_PLEX_TOKEN, '').strip() else emojis.CROSS
-        url_status = emojis.CHECK if current_config.get(constants.CONFIG_PLEX_URL, '').strip() else emojis.CROSS
-        tmdb_status = emojis.CHECK if current_config.get(constants.CONFIG_TMDB_API_KEY, '').strip() else emojis.CROSS
+        token_status = (
+            emojis.CHECK
+            if current_config.get(constants.CONFIG_PLEX_TOKEN, "").strip()
+            else emojis.CROSS
+        )
+        url_status = (
+            emojis.CHECK
+            if current_config.get(constants.CONFIG_PLEX_URL, "").strip()
+            else emojis.CROSS
+        )
+        tmdb_status = (
+            emojis.CHECK
+            if current_config.get(constants.CONFIG_TMDB_API_KEY, "").strip()
+            else emojis.CROSS
+        )
         plex_library = (
             current_config.get(constants.CONFIG_PLEX_LIBRARY, "").strip()
             or constants.DEFAULT_LIBRARY_NAME
@@ -212,17 +224,31 @@ def handle_main_menu(compact=False) -> str:
         title="MAIN MENU",
         title_emoji=emojis.CLAPPER,
         title_color=PLEX_YELLOW,
-        footer=f"{emojis.INFO}  Return to this menu after each operation." if compact else f"{emojis.INFO}  You can return to this menu after each collection is created.",
+        footer=(
+            f"{emojis.INFO}  Return to this menu after each operation."
+            if compact
+            else f"{emojis.INFO}  You can return to this menu after each collection is created."
+        ),
     )
 
     if compact:
         # Shorter, more concise descriptions
-        menu.add_option("1", "Franchise / Series", emoji=emojis.FRANCHISE, color=Fore.GREEN)
-        menu.add_option("2", "Studio / Collections", emoji=emojis.STUDIO, color=Fore.GREEN)
+        menu.add_option(
+            "1", "Franchise / Series", emoji=emojis.FRANCHISE, color=Fore.GREEN
+        )
+        menu.add_option(
+            "2", "Studio / Collections", emoji=emojis.STUDIO, color=Fore.GREEN
+        )
         menu.add_option("3", "Manual Entry", emoji=emojis.MANUAL, color=Fore.GREEN)
-        menu.add_option("4", "Missing Movies Scanner", emoji=emojis.FRANCHISE, color=Fore.GREEN)
-        menu.add_option("5", "Fix Posters & Backgrounds", emoji=emojis.ART, color=Fore.YELLOW)
-        menu.add_option("6", "Settings & Credentials", emoji=emojis.CONFIGURE, color=Fore.YELLOW)
+        menu.add_option(
+            "4", "Missing Movies Scanner", emoji=emojis.FRANCHISE, color=Fore.GREEN
+        )
+        menu.add_option(
+            "5", "Fix Posters & Backgrounds", emoji=emojis.ART, color=Fore.YELLOW
+        )
+        menu.add_option(
+            "6", "Settings & Credentials", emoji=emojis.CONFIGURE, color=Fore.YELLOW
+        )
     else:
         # Full descriptions with examples
         menu.add_option(
