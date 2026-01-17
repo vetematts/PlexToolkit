@@ -134,7 +134,8 @@ def welcome(show_logo=True):
     """Display welcome message and Plex logo, clearing the screen first."""
     clear_screen()
     if show_logo:
-        print()
+        # Add extra spacing to ensure ASCII art is visible at top
+        print("\n" * 2)  # Push it down a bit from very top
         print_plex_logo_ascii()
         print(PLEX_YELLOW + f"\n{emojis.MOVIE} Welcome to the Plex Toolkit!\n")
     else:
