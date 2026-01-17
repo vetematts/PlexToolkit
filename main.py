@@ -237,7 +237,7 @@ def handle_main_menu(compact=False) -> str:
             "1", "Franchise / Series", emoji=emojis.FRANCHISE, color=Fore.GREEN
         )
         menu.add_option(
-            "2", "Studio / Collections", emoji=emojis.STUDIO, color=Fore.GREEN
+            "2", " Studio / Collections", emoji=emojis.STUDIO, color=Fore.GREEN
         )
         menu.add_option("3", "Manual Entry", emoji=emojis.MANUAL, color=Fore.GREEN)
         menu.add_option(
