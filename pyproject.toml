@@ -1,0 +1,24 @@
+[project]
+name = "plex-toolkit"
+version = "0.1.0"
+description = "CLI utilities for managing Plex movie libraries and artwork."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "beautifulsoup4",
+    "colorama",
+    "emojis",
+    "plexapi>=4.15.0",
+    "requests",
+    "tmdbv3api",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "pytest",
+    "ruff",
+]
+
+[tool.uv]
+package = false

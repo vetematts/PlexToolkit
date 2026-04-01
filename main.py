@@ -275,11 +275,9 @@ def handle_main_menu(compact=False) -> str:
         )
 
     menu.add_option("7", "Exit", emoji=emojis.EXIT, color=Fore.RED)
-    menu.display()
 
-    mode = read_menu_choice(
-        "Select an option (Esc to exit): ", menu.get_valid_choices()
-    )
+    # Use interactive menu with arrow key navigation
+    mode = menu.display_interactive()
     if mode == "ESC":
         return "7"
     return mode

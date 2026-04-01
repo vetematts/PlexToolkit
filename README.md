@@ -24,31 +24,22 @@ Plex Toolkit is a Python application designed to help manage Plex movie librarie
 
 ## Prerequisites 📋
 
-*   **Python 3.6+**
+*   **Python 3.9+**
+*   **uv**: Install from [astral.sh/uv](https://astral.sh/uv/)
 *   **Plex Media Server**: You need the URL and an X-Plex-Token.
 *   **TMDb API Key**: (Optional) Required for dynamic franchise searching and the Fix Posters & Backgrounds tool.
 
 ## Installation 🚀
 
 1.  **Clone or Download** the repository.
-2.  **Create a Virtual Environment** (Recommended):
-    Using a virtual environment keeps dependencies isolated from your system.
+2.  **Create the Environment and Install Dependencies**:
+    `uv` creates and manages the virtual environment for you.
     ```bash
-    python -m venv .venv  # Use 'python3' on macOS/Linux
-
-    # Windows:
-    .venv\Scripts\activate
-
-    # macOS / Linux:
-    source .venv/bin/activate
+    uv sync --extra dev
     ```
-3.  **Install Dependencies**:
+3.  **Run the App**:
     ```bash
-    pip install -r requirements.txt
-    ```
-4.  **Run the App**:
-    ```bash
-    python main.py       # Use 'python3' on macOS/Linux
+    uv run python main.py
     ```
 
 ## Configuration ⚙️
@@ -99,9 +90,10 @@ On the first run, the tool will create a `config.json` file. You can configure t
 
 If you wish to modify the code, the following tools are included to ensure quality:
 
-*   **Formatting**: Run `black .` to auto-format code.
-*   **Linting**: Run `ruff check .` to catch style issues and bugs.
-*   **Testing**: Run `pytest` to execute unit tests.
+*   **Sync Dependencies**: Run `uv sync --extra dev`.
+*   **Formatting**: Run `uv run black .` to auto-format code.
+*   **Linting**: Run `uv run ruff check .` to catch style issues and bugs.
+*   **Testing**: Run `uv run pytest` to execute unit tests.
 
 ## Disclaimer ⚠️
 
