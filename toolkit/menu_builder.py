@@ -3,7 +3,6 @@ MenuBuilder class for creating consistent, styled menus throughout the applicati
 """
 
 import sys
-import contextlib
 from colorama import Fore
 from typing import Optional, Set
 

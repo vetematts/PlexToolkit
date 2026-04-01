@@ -1,9 +1,0 @@
-plexapi>=4.15.0
-tmdbv3api
-colorama
-requests
-emojis
-beautifulsoup4
-pytest
-black
-ruff
