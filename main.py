@@ -18,7 +18,13 @@ from toolkit import emojis
 from toolkit import constants
 from toolkit.services.plex_manager import get_plex_manager
 from toolkit.services.tmdb_search import TMDbSearch
-from toolkit.styling import print_plex_logo_ascii, PLEX_YELLOW
+from toolkit.styling import (
+    format_plex_wordmark_toolkit,
+    print_divider,
+    print_plex_branding,
+    print_plex_logo_image,
+    PLEX_YELLOW,
+)
 from toolkit.menu_builder import MenuBuilder
 from toolkit import features
 from toolkit import ops
@@ -134,10 +140,31 @@ def welcome(show_logo=True):
     """Display welcome message and Plex logo, clearing the screen first."""
     clear_screen()
     if show_logo:
-        # Add extra spacing to ensure ASCII art is visible at top
-        print("\n" * 2)  # Push it down a bit from very top
-        print_plex_logo_ascii()
-        print(PLEX_YELLOW + f"\n{emojis.MOVIE} Welcome to the Plex Toolkit!\n")
+        # Optional overrides:
+        # - PLEX_LOGO_STYLE=auto|full|mark
+        # - PLEX_CHEVRON_RIGHT="❯" (orange)
+        # - PLEX_CHEVRON_LEFT="❮" (dim)
+        # - PLEX_LOGO_IMAGE="/path/to/logo.png" (best-effort; may not work in all terminals)
+
+        style = os.getenv("PLEX_LOGO_STYLE", "auto")
+        right_chevron = os.getenv("PLEX_CHEVRON_RIGHT", "❯")
+        left_chevron = os.getenv("PLEX_CHEVRON_LEFT", "❮")
+
+        if style == "full":
+            printed_image = print_plex_logo_image(os.getenv("PLEX_LOGO_IMAGE", ""))
+            if not printed_image:
+                print_plex_branding(style="full")
+            print()
+
+        # Modern default header
+        print(
+            f"{emojis.MOVIE} Welcome to the "
+            + format_plex_wordmark_toolkit(
+                right_chevron=right_chevron, left_chevron=left_chevron
+            )
+            + "!"
+        )
+        print_divider()
     else:
         # Compact header without ASCII art
         print(PLEX_YELLOW + f"\n{emojis.MOVIE} Plex Toolkit\n" + Fore.RESET)
@@ -193,11 +220,10 @@ def check_credentials(compact=False):
             current_config.get(constants.CONFIG_PLEX_LIBRARY, "").strip()
             or constants.DEFAULT_LIBRARY_NAME
         )
-        print(
+        return (
             Fore.LIGHTBLACK_EX
             + f"{emojis.KEY} Plex: Token {token_status} URL {url_status} | TMDb: {tmdb_status} | Library: {plex_library}"
             + Fore.RESET
-            + "\n"
         )
     else:
         # Full version
@@ -216,6 +242,7 @@ def check_credentials(compact=False):
             or constants.DEFAULT_LIBRARY_NAME
         )
         print(f"Plex Library: {emojis.CHECK} {plex_library}\n")
+        return None
 
 
 def handle_main_menu(compact=False) -> str:
@@ -517,8 +544,10 @@ def run_collection_builder():
     # Returns to main menu with `continue`.
 
     while True:
-        welcome(show_logo=True)  # Always show ASCII art
-        check_credentials(compact=True)  # Always use compact credentials
+        welcome(show_logo=True)
+        cred_line = check_credentials(compact=True)
+        if cred_line:
+            print(cred_line + "\n")
 
         # Initialize TMDb helper early so it's available for tools
         tmdb = (

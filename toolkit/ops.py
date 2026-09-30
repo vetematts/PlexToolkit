@@ -25,13 +25,15 @@ def format_plex_item(item) -> str:
 
 
 def pick_plex_match(raw_title: str, results):
-    """Handles user selection when multiple Plex matches are found."""
+    """Automatically select unique exact matches and ask about uncertain ones."""
     if not results:
         return None
 
     # Parse the search term
     search_title, search_year = extract_title_and_year(raw_title)
     search_norm = normalize_title(search_title)
+    if not search_norm:
+        return None
 
     good_matches = []
 
@@ -67,19 +69,34 @@ def pick_plex_match(raw_title: str, results):
     if not good_matches:
         return None
 
-    # Sort by title similarity
+    # Prefer the requested year, then title similarity, in the review list.
     good_matches.sort(
-        key=lambda x: difflib.SequenceMatcher(
-            None, search_norm, normalize_title(x.title)
-        ).ratio(),
+        key=lambda x: (
+            search_year is not None and getattr(x, "year", None) == search_year,
+            difflib.SequenceMatcher(None, search_norm, normalize_title(x.title)).ratio(),
+        ),
         reverse=True,
     )
 
-    # If only one match, or the best match is an exact title match, return it automatically.
-    if len(good_matches) == 1 or normalize_title(good_matches[0].title) == search_norm:
-        return good_matches[0]
+    # Prefix and fuzzy matches always require review, even with one result.
+    # A supplied year must be verifiable before choosing automatically.
+    exact_matches = [
+        item
+        for item in good_matches
+        if normalize_title(item.title) == search_norm
+        and (search_year is None or getattr(item, "year", None) is not None)
+    ]
+    if search_year is not None:
+        exact_year_matches = [
+            item for item in exact_matches if getattr(item, "year", None) == search_year
+        ]
+        if exact_year_matches:
+            exact_matches = exact_year_matches
 
-    print(f"\nMultiple Plex matches for '{raw_title}':")
+    if len(exact_matches) == 1:
+        return exact_matches[0]
+
+    print(f"\nReview Plex matches for '{raw_title}':")
     for i, item in enumerate(good_matches, 1):
         print(f"{i}. {format_plex_item(item)}")
 
