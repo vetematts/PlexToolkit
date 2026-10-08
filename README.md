@@ -1,6 +1,6 @@
-# Plex Toolkit 🎬
+# PlexCurator 🎬
 
-Plex Toolkit is a Python application designed to help manage Plex movie libraries. It automates the creation of collections based on franchises or studios and includes tools to standardise movie artwork using metadata from The Movie Database (TMDb).
+PlexCurator is a Python application designed to help manage Plex movie libraries. It automates the creation of collections based on franchises or studios and includes tools to standardise movie artwork using metadata from The Movie Database (TMDb).
 
 <img width="1282" height="1608" alt="CleanShot 2026-01-02 at 00 33 15@2x" src="https://github.com/user-attachments/assets/d26d728e-c077-4037-82ef-ddfcb7b4eb43" />
 

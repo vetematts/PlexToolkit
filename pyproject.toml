@@ -1,5 +1,5 @@
 [project]
-name = "plex-toolkit"
+name = "plexcurator"
 version = "0.1.0"
 description = "CLI utilities for managing Plex movie libraries and artwork."
 readme = "README.md"

@@ -387,7 +387,7 @@ wheels = [
 ]
 
 [[package]]
-name = "plex-toolkit"
+name = "plexcurator"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

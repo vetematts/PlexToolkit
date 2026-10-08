@@ -19,7 +19,7 @@ from toolkit import constants
 from toolkit.services.plex_manager import get_plex_manager
 from toolkit.services.tmdb_search import TMDbSearch
 from toolkit.styling import (
-    format_plex_wordmark_toolkit,
+    format_plex_wordmark_curator,
     print_divider,
     print_plex_branding,
     print_plex_logo_image,
@@ -159,7 +159,7 @@ def welcome(show_logo=True):
         # Modern default header
         print(
             f"{emojis.MOVIE} Welcome to the "
-            + format_plex_wordmark_toolkit(
+            + format_plex_wordmark_curator(
                 right_chevron=right_chevron, left_chevron=left_chevron
             )
             + "!"
@@ -167,7 +167,7 @@ def welcome(show_logo=True):
         print_divider()
     else:
         # Compact header without ASCII art
-        print(PLEX_YELLOW + f"\n{emojis.MOVIE} Plex Toolkit\n" + Fore.RESET)
+        print(PLEX_YELLOW + f"\n{emojis.MOVIE} PlexCurator\n" + Fore.RESET)
 
 
 def check_system_requirements():

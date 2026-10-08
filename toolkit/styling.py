@@ -93,11 +93,11 @@ def print_plex_wordmark(right_chevron: str = "❯"):
     )
 
 
-def format_plex_wordmark_toolkit(
+def format_plex_wordmark_curator(
     right_chevron: str = "❯", left_chevron: str = "‹"
 ) -> str:
     """
-    Return a styled "ple{right_chevron}{left_chevron} Toolkit" string for inline use.
+    Return a styled "ple{right_chevron}{left_chevron} Curator" string for inline use.
 
     Notes:
     - `right_chevron` is the Plex chevron and is colored Plex yellow.
@@ -112,7 +112,7 @@ def format_plex_wordmark_toolkit(
         + Fore.LIGHTBLACK_EX
         + left_chevron
         + Fore.LIGHTBLACK_EX
-        + " Toolkit"
+        + " Curator"
         + Style.RESET_ALL
     )
 
