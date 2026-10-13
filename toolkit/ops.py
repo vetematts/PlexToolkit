@@ -217,7 +217,8 @@ def _process_smart_collection(library, collection_name, smart_filter, pause_fn):
 def _handle_existing_collection(library, collection_name, found_movies, pause_fn):
     """
     Checks if a collection exists and handles user interaction (Append/Overwrite).
-    Returns 'proceed' if the caller should create a new collection (or overwrite).
+    Returns 'proceed' if the caller should confirm creating a new collection.
+    Returns 'overwrite' if replacement was confirmed and the old collection deleted.
     Returns 'stop' if the action is complete (appended) or cancelled.
     """
     existing_collections = library.search(
@@ -294,13 +295,26 @@ def _handle_existing_collection(library, collection_name, found_movies, pause_fn
         return "stop"
 
     if choice in ("o", "O"):
+        confirm = read_line(
+            f"Overwrite '{existing_collection.title}' with these movies? (y/n): "
+        )
+        if not confirm or confirm.strip().lower() != "y":
+            print("Cancelled.")
+            pause_fn()
+            return "stop"
+
         print(
             Fore.YELLOW
             + f"\n{emojis.INFO} Deleting existing collection '{existing_collection.title}'..."
             + Fore.RESET
         )
-        existing_collection.delete()
-        return "proceed"
+        try:
+            existing_collection.delete()
+        except Exception as e:
+            print(Fore.RED + f"\n{emojis.CROSS} Failed to delete collection: {e}")
+            pause_fn()
+            return "stop"
+        return "overwrite"
 
     return "stop"
 
@@ -409,7 +423,7 @@ def process_and_create_collection(
     if action == "stop":
         return
     elif action == "proceed":
-        # If proceeding (and not overwriting), ask for final confirmation
+        # New collections need confirmation; overwrites were already confirmed.
         confirm = read_line("Proceed to create collection with these movies? (y/n): ")
         if not confirm or confirm.strip().lower() != "y":
             print(Fore.RED + f"\n{emojis.CROSS} Aborted.")
